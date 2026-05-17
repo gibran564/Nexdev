@@ -1,173 +1,281 @@
 # nexdev
 
-Navegador de proyectos multiplataforma con fzf — escrito en Rust.
+Fast project navigation for developers who keep real work spread across many folders.
 
-Catppuccin Mocha · Iconos Nerd Fonts · Preview con info de git · Configurable sin tocar código.
+`nexdev` scans your configured project roots, detects tech stacks, opens an interactive `fzf` picker with a live preview, changes your shell into the selected project, and optionally opens your editor.
+
+Built by [@gibran564](https://github.com/gibran564).
+
+> Status: early personal tool. Public source, not licensed yet. See [License](#license).
 
 ---
 
-## Instalación rápida
+## Why nexdev
+
+Most project launchers assume every repo lives in one tidy directory. Real machines do not. `nexdev` is for workstations with side projects, client work, experiments, monorepos, old archives, and language-specific folders.
+
+It gives you one command:
+
+```bash
+nexdev
+```
+
+Then you search, click or scroll through projects, preview what is inside, press Enter, and land in the right directory.
+
+## Highlights
+
+| Feature | What it gives you |
+|---|---|
+| Interactive project picker | `fzf` UI with keyboard, mouse click, scroll, search, and preview |
+| Smart detection | Tags projects by `.git`, `package.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`, and more |
+| Live preview | Shows path, branch, remote, git status, and top-level files |
+| Shell integration | Changes the current terminal directory after selection |
+| Editor launch | Opens `code`, `nvim`, `vim`, `hx`, `idea`, `zed`, or disables editor launch |
+| Bilingual UX | Spanish and English, selected at the beginning of setup |
+| Configurable roots | Add multiple roots and per-root exclusions without editing code |
+
+## Preview
+
+```text
+╭─  nexdev  ─────────────────────────────────────────────────────╮
+│  buscar                                                        │
+├─ proyectos ──────────────────────┬─ preview ───────────────────┤
+│ > my-api       · rust · git      │  my-api                     │
+│   dashboard    · next · tailwind │  C:\Users\gibran\projects   │
+│   cli-lab      · go · git        │                             │
+│   design-tool  · react           │  rama    main               │
+│                                  │  remoto  github.com/...     │
+│                                  │                             │
+│                                  │  src/                       │
+│                                  │  Cargo.toml                 │
+│                                  │  README.md                  │
+╰──────────────────────────────────┴─────────────────────────────╯
+```
+
+## Requirements
+
+| Tool | Required | Install |
+|---|---:|---|
+| [fzf](https://github.com/junegunn/fzf) | Yes | `winget install junegunn.fzf`, `scoop install fzf`, `brew install fzf` |
+| [Nerd Font](https://www.nerdfonts.com/) | Recommended | Set it in your terminal profile |
+| Rust | Only for source installs | <https://rustup.rs> |
+
+For mouse click and scroll, use a terminal with mouse support, such as Windows Terminal, iTerm2, WezTerm, Kitty, Alacritty, or a modern Linux terminal.
+
+## Install
+
+### Windows PowerShell
+
+```powershell
+irm https://raw.githubusercontent.com/gibran564/nexdev/main/install.ps1 | iex
+```
+
+The installer downloads the latest Windows release, installs `nexdev.exe` into `$HOME\.local\bin`, adds it to your user `PATH`, and adds the shell wrapper to `$PROFILE`.
 
 ### Linux / macOS
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/TU_USUARIO/nexdev/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/gibran564/nexdev/main/install.sh | sh
 ```
 
-El script detecta tu OS y arquitectura, descarga el binario correcto de GitHub Releases,
-lo instala en `~/.local/bin`, y agrega el wrapper de shell a tu rc file automáticamente.
+The installer downloads the latest release for your OS and architecture, installs it into `~/.local/bin`, and helps you add the shell wrapper.
 
-### Windows (PowerShell)
-
-```powershell
-irm https://raw.githubusercontent.com/TU_USUARIO/nexdev/main/install.ps1 | iex
-```
-
-Descarga `nexdev.exe`, lo instala en `$HOME\.local\bin` (sin admin), lo agrega al PATH de usuario,
-y escribe el wrapper en `$PROFILE`.
-
-### Con Rust instalado
+### From source
 
 ```bash
-cargo install nexdev --git https://github.com/TU_USUARIO/nexdev
+cargo install --git https://github.com/gibran564/nexdev
 ```
 
----
+After installing from source, run:
 
-## Prerequisitos
-
-| Herramienta | Por qué | Cómo instalar |
-|---|---|---|
-| [fzf](https://github.com/junegunn/fzf) | El fuzzy finder | `brew install fzf` / `scoop install fzf` / `winget install junegunn.fzf` |
-| [Nerd Font](https://www.nerdfonts.com/) | Iconos de tech stack | Configurar en la terminal |
-
----
-
-## Lo que hace
-
-`nexdev` escanea directorios configurados buscando proyectos (detectados por `Cargo.toml`,
-`package.json`, `requirements.txt`, `.git`, etc.), lanza fzf con panel de preview en vivo,
-y mediante un wrapper hace `cd` al proyecto seleccionado y abre tu editor.
-
-```
- proyecto >
-╭──────────────────────────────────────╮  ╭──────────────────────────────────╮
-│  bubble-intelligence  · rust · git   │  │  burros-itd                      │
-│ > burros-itd  · next · tailwind      │  │  /home/christian/projects/       │
-│  eclipsis  · node · git              │  │  burros-itd                      │
-│  rancho-sport  · next · tailwind     │  │                                  │
-╰──────────────────────────────────────╯  │  rama  main                      │
-                                           │  remoto  github.com/...          │
-                                           │   src/  package.json  README.md  │
-                                           ╰──────────────────────────────────╯
+```bash
+nexdev install
 ```
 
----
+That prints the exact shell integration snippet for Bash, Zsh, Fish, and PowerShell.
 
-## Primer uso
+## First Run
 
-El asistente aparece automáticamente en el primer run:
+Run:
 
+```bash
+nexdev
 ```
-  nexdev — configuracion inicial
+
+On first launch, `nexdev` starts a setup wizard:
+
+```text
+  nexdev  initial setup / configuracion inicial
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  1. Donde estan tus proyectos?
-  Ruta 1 [/home/christian]: /home/christian/projects
-  ✓  /home/christian/projects
+  1/3  Language / Idioma
 
-  2. Que editor debe abrir el proyecto?
+     1  Espanol
+     2  English
+
+  ? Selecciona idioma / Choose language [1]
+
+  nexdev  configuracion inicial
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  2/3  Donde estan tus proyectos?
+     Enter acepta la ruta sugerida. Despues, Enter vacio termina la lista.
+
+  ? Ruta 1 - vacio para terminar [C:\Users\gibran]
+  ✓  C:\Users\gibran
+
+  3/3  Editor preferido
+     Se usara para abrir el proyecto seleccionado.
+
   >  1. VS Code  [detectado]
-     2. Neovim   3. Vim   4. Ninguno
-
-  Guardar y continuar? [Y/n]:
-  ✓  Configuracion guardada. Usa nexdev add <path> para agregar mas rutas.
+     2. Neovim
+     3. Vim
+     4. Helix
+     5. IntelliJ
+     6. Zed
+     7. Ninguno
 ```
 
-Config en `~/.config/nexdev/config.toml` (Linux/macOS) o `%APPDATA%\nexdev\config.toml` (Windows).
+Config file locations:
 
----
+| OS | Path |
+|---|---|
+| Windows | `%APPDATA%\nexdev\config.toml` |
+| Linux/macOS | `~/.config/nexdev/config.toml` |
 
-## Comandos
+## Usage
 
-```
-nexdev                     Abrir el fuzzy finder (primer run -> asistente)
-nexdev add <ruta>          Agregar raiz de busqueda
-nexdev add <ruta>
-  --exclude dir1 dir2    Agregar raiz con exclusiones locales
-nexdev remove <ruta>       Eliminar una raiz
-nexdev editor <cmd>        Cambiar editor ("none" para deshabilitar)
-nexdev language es|en      Cambiar idioma
-nexdev paths               Listar raices configuradas
-nexdev config              Mostrar configuracion completa
-nexdev init                Re-ejecutar el asistente
-nexdev install             Mostrar integracion de shell
-nexdev --help              Ayuda completa
+```bash
+nexdev
 ```
 
-### Ejemplos
+Open the project picker. Select a project to `cd` into it and open your configured editor.
 
 ```bash
 nexdev add ~/projects
 nexdev add ~/work --exclude archived legacy build
-nexdev editor nvim
-nexdev editor "code --new-window"
-nexdev editor none
-nexdev language en
-nexdev language es
-nexdev paths
-nexdev init
 ```
 
----
+Add project roots. Local exclusions skip noisy folders inside that root.
 
-## Configuracion manual (`config.toml`)
+```bash
+nexdev editor code
+nexdev editor "code --new-window"
+nexdev editor nvim
+nexdev editor none
+```
+
+Set or disable the editor command.
+
+```bash
+nexdev language es
+nexdev language en
+```
+
+Switch the CLI language.
+
+```bash
+nexdev paths
+nexdev config
+nexdev init
+nexdev install
+```
+
+Inspect roots, show full config, rerun setup, or print shell integration.
+
+## Commands
+
+| Command | Description |
+|---|---|
+| `nexdev` | Open the project picker. First run starts setup |
+| `nexdev add <path>` | Add a project root |
+| `nexdev add <path> --exclude dir1 dir2` | Add a root with local exclusions |
+| `nexdev remove <path>` | Remove a configured root |
+| `nexdev editor <cmd>` | Set the editor command |
+| `nexdev editor none` | Disable editor launch |
+| `nexdev language es\|en` | Change language |
+| `nexdev paths` | List configured roots |
+| `nexdev config` | Show full config |
+| `nexdev init` | Rerun setup |
+| `nexdev install` | Print shell wrapper snippets |
+| `nexdev --help` | Show CLI help |
+
+## Manual Config
 
 ```toml
 language = "es"
 editor = "code"
 
 global_excludes = [
-  "Desktop", "Documents", "Downloads", "AppData",
-  "node_modules", "target", ".venv",
+  "Desktop",
+  "Documents",
+  "Downloads",
+  "AppData",
+  "node_modules",
+  "target",
+  ".venv",
 ]
 
 [[roots]]
-path = "/home/christian/projects"
+path = "C:\\Users\\gibran\\projects"
 exclude = ["archived"]
 
 [[roots]]
-path = "/home/christian/work"
-exclude = ["client-a", "legacy"]
+path = "C:\\Users\\gibran\\work"
+exclude = ["legacy", "tmp"]
 ```
 
----
+## Project Detection
 
-## Deteccion de proyectos
+| Marker | Tag |
+|---|---|
+| `.git/` | `git` |
+| GitHub remote | GitHub icon |
+| GitLab remote | GitLab icon |
+| Azure DevOps remote | Azure icon |
+| `package.json` | `node` |
+| `package.json` + `next.config.*` | `next` |
+| `package.json` + `"react"` | `react` |
+| `package.json` + `"vue"` | `vue` |
+| `package.json` + `"svelte"` | `svelte` |
+| `tailwind.config.*` | `tailwind` |
+| `requirements.txt`, `pyproject.toml`, `setup.py`, `Pipfile` | `python` |
+| `*.ipynb` | `jupyter` |
+| `Cargo.toml` | `rust` |
+| `*.sln`, `*.csproj`, `*.fsproj` | `dotnet` |
+| `pom.xml`, `build.gradle`, `build.gradle.kts` | `java` |
+| `go.mod` | `go` |
 
-| Archivo(s)                              | Tags            | Icono |
-|-----------------------------------------|-----------------|-------|
-| `.git/`                                 | `git`           |      |
-| `package.json` + `next.config.*`        | `next`          |      |
-| `package.json` + `"react"`              | `react`         |      |
-| `package.json` + `"vue"`               | `vue`           |      |
-| `package.json`                          | `node`          |      |
-| `requirements.txt` / `pyproject.toml`  | `python`        |      |
-| Archivos `.ipynb`                       | `jupyter`       |      |
-| `Cargo.toml`                            | `rust`          |      |
-| `*.sln` / `*.csproj`                    | `dotnet`        |      |
-| `pom.xml` / `build.gradle`              | `java`          |      |
-| `go.mod`                                | `go`            |      |
-| `tailwind.config.*`                     | `tailwind`      | —    |
+## Shell Integration
 
----
+A child process cannot change the working directory of its parent shell. `nexdev` solves that with a small shell wrapper:
 
-## Integracion de shell
+1. The binary prints the selected path to stdout.
+2. The wrapper captures that path.
+3. The wrapper runs `cd` / `Set-Location` in the current shell.
 
-> Un proceso hijo no puede cambiar el CWD del shell padre. El binario imprime la ruta
-> a stdout; el wrapper la lee y ejecuta `cd`. Ejecuta `nexdev install` para ver el fragmento exacto.
+Run this to print the snippets:
 
-**bash** (`~/.bashrc`):
+```bash
+nexdev install
+```
+
+PowerShell example:
+
+```powershell
+function nexdev {
+    if ($args.Count -gt 0) {
+        & nexdev.exe @args
+        return
+    }
+
+    $selected = & nexdev.exe
+    if ($selected) { Set-Location $selected }
+}
+```
+
+Bash/Zsh example:
+
 ```bash
 nexdev() {
   if [ "$#" -gt 0 ]; then
@@ -176,58 +284,14 @@ nexdev() {
   fi
 
   local selected
-  selected=$(command nexdev "$@")
+  selected=$(command nexdev)
   [ -n "$selected" ] && cd "$selected"
 }
 ```
 
-**zsh** (`~/.zshrc`):
-```zsh
-nexdev() {
-  if (( $# > 0 )); then
-    command nexdev "$@"
-    return
-  fi
+## Release Artifacts
 
-  local selected
-  selected=$(command nexdev "$@")
-  [[ -n "$selected" ]] && cd "$selected"
-}
-```
-
-**fish** (`~/.config/fish/functions/nexdev.fish`):
-```fish
-function nexdev
-  if test (count $argv) -gt 0
-    command nexdev $argv
-    return
-  end
-
-  set selected (command nexdev $argv)
-  if test -n "$selected"
-    cd $selected
-  end
-end
-```
-
-**PowerShell** (`$PROFILE`):
-```powershell
-function nexdev {
-    if ($args.Count -gt 0) {
-        & nexdev.exe @args
-        return
-    }
-
-    $selected = & nexdev.exe @args
-    if ($selected) { Set-Location $selected }
-}
-```
-
----
-
-## Plataformas
-
-| OS | Arquitectura | Binario |
+| OS | Architecture | Artifact |
 |---|---|---|
 | Linux | x86_64 | `nexdev-linux-x86_64.tar.gz` |
 | Linux | ARM64 | `nexdev-linux-aarch64.tar.gz` |
@@ -235,42 +299,45 @@ function nexdev {
 | macOS | Intel | `nexdev-macos-x86_64.tar.gz` |
 | Windows | x86_64 | `nexdev-windows-x86_64.zip` |
 
----
-
-## Publicar nueva version
+## Development
 
 ```bash
-git tag v0.2.0
-git push origin v0.2.0
-# GitHub Actions compila para todos los targets y publica el Release automaticamente
+cargo fmt
+cargo check
+cargo run -- --help
+cargo run -- init
 ```
 
----
+Project layout:
 
-## Estructura
-
-```
+```text
 nexdev/
-+-- .github/
-|   +-- workflows/
-|       +-- ci.yml        <- verifica compilacion en PRs
-|       +-- release.yml   <- build multiplataforma + GitHub Release
-+-- install.sh            <- instalador Linux/macOS
-+-- install.ps1           <- instalador Windows
-+-- Cargo.toml / Cargo.lock
++-- install.sh
++-- install.ps1
++-- Cargo.toml
 +-- README.md
 +-- src/
-    +-- main.rs           <- dispatch
-    +-- cli.rs            <- argumentos (clap derive)
-    +-- config.rs         <- Config, asistente, cmd_add/remove/editor
-    +-- detect.rs         <- deteccion de tipo por archivos marker
-    +-- navigator.rs      <- escaneo, fzf, seleccion
-    +-- preview.rs        <- panel preview (mismo binario via __preview)
-    +-- shell.rs          <- integracion de shell
+    +-- main.rs       # command dispatch
+    +-- cli.rs        # clap arguments
+    +-- config.rs     # config, setup wizard, commands
+    +-- detect.rs     # project type detection
+    +-- i18n.rs       # Spanish/English strings
+    +-- navigator.rs  # scan, fzf UI, selection handling
+    +-- preview.rs    # live preview panel
+    +-- shell.rs      # shell wrapper snippets
 ```
 
----
+## Roadmap
 
-## Licencia
+- Polish release automation and binary checksums.
+- Add screenshots or terminal recordings.
+- Add tests for config parsing and project detection.
+- Decide and publish an explicit license.
 
-MIT
+## License
+
+No license has been published yet.
+
+That means the source is visible for review and learning, but reuse, redistribution, modification, and commercial use are not granted unless the author adds a license or gives explicit permission.
+
+Copyright (c) 2026 Gibran, [@gibran564](https://github.com/gibran564). All rights reserved.

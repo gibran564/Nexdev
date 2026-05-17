@@ -91,7 +91,7 @@ nexdev() {
   fi
 
   local selected
-  selected=$(command nexdev "$@")
+  selected=$(command nexdev)
   [ -n "$selected" ] && cd "$selected"
 }
 "#;
@@ -105,7 +105,7 @@ nexdev() {
   fi
 
   local selected
-  selected=$(command nexdev "$@")
+  selected=$(command nexdev)
   [[ -n "$selected" ]] && cd "$selected"
 }
 "#;
@@ -118,7 +118,7 @@ function nexdev
     return
   end
 
-  set selected (command nexdev $argv)
+  set selected (command nexdev)
   if test -n "$selected"
     cd $selected
   end
@@ -133,7 +133,7 @@ function nexdev {
         return
     }
 
-    $selected = & nexdev.exe @args
+    $selected = & nexdev.exe
     if ($selected) { Set-Location $selected }
 }
 "#;

@@ -2,6 +2,9 @@
 name = "nexdev"
 version = "0.1.0"
 edition = "2021"
+authors = ["Gibran <https://github.com/gibran564>"]
+description = "Fast interactive project navigator powered by fzf"
+repository = "https://github.com/gibran564/nexdev"
 
 [[bin]]
 name = "nexdev"

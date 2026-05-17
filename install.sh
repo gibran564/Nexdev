@@ -3,7 +3,7 @@
 #  install.sh — nexdev installer for Linux and macOS
 #
 #  Uso:
-#    curl -fsSL https://raw.githubusercontent.com/TU_USUARIO/nexdev/main/install.sh | sh
+#    curl -fsSL https://raw.githubusercontent.com/gibran564/nexdev/main/install.sh | sh
 #
 #  Qué hace:
 #    1. Detecta OS y arquitectura
@@ -16,7 +16,7 @@ set -euo pipefail
 
 # ── Config ────────────────────────────────────────────────────
 
-REPO="TU_USUARIO/nexdev"          # ← Cambia esto a tu usuario/repo de GitHub
+REPO="gibran564/nexdev"
 BINARY="nexdev"
 INSTALL_DIR="${NEXDEV_INSTALL_DIR:-$HOME/.local/bin}"
 
@@ -145,8 +145,13 @@ case "$SHELL_NAME" in
     printf "  Agrega esto a ${TEAL}~/.zshrc${RESET}:\n\n"
     printf "    ${OVERLAY}# nexdev — project navigator${RESET}\n"
     printf "    ${OVERLAY}nexdev() {${RESET}\n"
+    printf "    ${OVERLAY}  if (( \$# > 0 )); then${RESET}\n"
+    printf "    ${OVERLAY}    command nexdev \"\$@\"${RESET}\n"
+    printf "    ${OVERLAY}    return${RESET}\n"
+    printf "    ${OVERLAY}  fi${RESET}\n"
+    printf "    ${OVERLAY}${RESET}\n"
     printf "    ${OVERLAY}  local selected${RESET}\n"
-    printf "    ${OVERLAY}  selected=\$(command nexdev \"\$@\")${RESET}\n"
+    printf "    ${OVERLAY}  selected=\$(command nexdev)${RESET}\n"
     printf "    ${OVERLAY}  [[ -n \"\$selected\" ]] && cd \"\$selected\"${RESET}\n"
     printf "    ${OVERLAY}}${RESET}\n\n"
     # Intentar auto-agregar si el usuario lo permite
@@ -157,8 +162,13 @@ case "$SHELL_NAME" in
 
 # nexdev — project navigator
 nexdev() {
+  if (( $# > 0 )); then
+    command nexdev "$@"
+    return
+  fi
+
   local selected
-  selected=$(command nexdev "$@")
+  selected=$(command nexdev)
   [[ -n "$selected" ]] && cd "$selected"
 }
 SNIPPET
@@ -171,7 +181,12 @@ SNIPPET
     mkdir -p "$(dirname "$FISH_FUNC")"
     cat > "$FISH_FUNC" << 'SNIPPET'
 function nexdev
-  set selected (command nexdev $argv)
+  if test (count $argv) -gt 0
+    command nexdev $argv
+    return
+  end
+
+  set selected (command nexdev)
   if test -n "$selected"
     cd $selected
   end
@@ -183,8 +198,13 @@ SNIPPET
     printf "  Agrega esto a ${TEAL}~/.bashrc${RESET}:\n\n"
     printf "    ${OVERLAY}# nexdev — project navigator${RESET}\n"
     printf "    ${OVERLAY}nexdev() {${RESET}\n"
+    printf "    ${OVERLAY}  if [ \"\$#\" -gt 0 ]; then${RESET}\n"
+    printf "    ${OVERLAY}    command nexdev \"\$@\"${RESET}\n"
+    printf "    ${OVERLAY}    return${RESET}\n"
+    printf "    ${OVERLAY}  fi${RESET}\n"
+    printf "    ${OVERLAY}${RESET}\n"
     printf "    ${OVERLAY}  local selected${RESET}\n"
-    printf "    ${OVERLAY}  selected=\$(command nexdev \"\$@\")${RESET}\n"
+    printf "    ${OVERLAY}  selected=\$(command nexdev)${RESET}\n"
     printf "    ${OVERLAY}  [ -n \"\$selected\" ] && cd \"\$selected\"${RESET}\n"
     printf "    ${OVERLAY}}${RESET}\n\n"
     printf "  ¿Agregar automáticamente a ~/.bashrc? [Y/n]: "
@@ -194,8 +214,13 @@ SNIPPET
 
 # nexdev — project navigator
 nexdev() {
+  if [ "$#" -gt 0 ]; then
+    command nexdev "$@"
+    return
+  fi
+
   local selected
-  selected=$(command nexdev "$@")
+  selected=$(command nexdev)
   [ -n "$selected" ] && cd "$selected"
 }
 SNIPPET

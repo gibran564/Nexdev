@@ -3,7 +3,7 @@
 #  install.ps1 — nexdev installer para Windows
 #
 #  Uso (PowerShell como usuario normal, NO requiere admin):
-#    irm https://raw.githubusercontent.com/TU_USUARIO/nexdev/main/install.ps1 | iex
+#    irm https://raw.githubusercontent.com/gibran564/nexdev/main/install.ps1 | iex
 #
 #  Qué hace:
 #    1. Detecta arquitectura (x86_64 / ARM64)
@@ -17,7 +17,7 @@ $ErrorActionPreference = 'Stop'
 
 # ── Config ────────────────────────────────────────────────────
 
-$Repo        = "TU_USUARIO/nexdev"    # ← Cambia a tu usuario/repo
+$Repo        = "gibran564/nexdev"
 $Binary      = "nexdev.exe"
 $InstallDir  = if ($env:NEXDEV_INSTALL_DIR) {
     $env:NEXDEV_INSTALL_DIR
@@ -46,7 +46,7 @@ function Fail    { Write-Host "  `e[38;2;243;139;168m✗`e[0m  $args" -Foregroun
 $env:TERM = 'xterm-256color'
 
 Write-Host ""
-Write-Host "  `e[38;2;203;166;247m`e[1mproj`e[0m  `e[38;2;108;112;134m— instalador para Windows`e[0m"
+Write-Host "  `e[38;2;203;166;247m`e[1mnexdev`e[0m  `e[38;2;108;112;134m— instalador para Windows`e[0m"
 Write-Host "  `e[38;2;108;112;134m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`e[0m"
 Write-Host ""
 
@@ -149,7 +149,12 @@ $snippet = @'
 
 # nexdev — project navigator
 function nexdev {
-    $selected = & nexdev.exe @args
+    if ($args.Count -gt 0) {
+        & nexdev.exe @args
+        return
+    }
+
+    $selected = & nexdev.exe
     if ($selected) { Set-Location $selected }
 }
 '@
@@ -191,6 +196,6 @@ Write-Host "  `e[38;2;166;227;161m`e[1m¡Listo!`e[0m"
 Write-Host ""
 Write-Host "  Próximos pasos:"
 Write-Host "    `e[38;2;203;166;247m1.`e[0m Abre una `e[38;2;148;226;213mnueva terminal`e[0m (para que tome el PATH y el $PROFILE)"
-Write-Host "    `e[38;2;203;166;247m2.`e[0m Ejecuta `e[38;2;148;226;213mproj`e[0m — el asistente de configuración aparece automáticamente"
+Write-Host "    `e[38;2;203;166;247m2.`e[0m Ejecuta `e[38;2;148;226;213mnexdev`e[0m — el asistente de configuración aparece automáticamente"
 Write-Host "    `e[38;2;203;166;247m3.`e[0m O configura manualmente: `e[38;2;148;226;213mnexdev add C:\Users\$env:USERNAME\projects`e[0m"
 Write-Host ""
