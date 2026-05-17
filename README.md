@@ -36,21 +36,9 @@ Then you search, click or scroll through projects, preview what is inside, press
 
 ## Preview
 
-```text
-╭─  nexdev  ─────────────────────────────────────────────────────╮
-│  buscar                                                        │
-├─ proyectos ──────────────────────┬─ preview ───────────────────┤
-│ > my-api       · rust · git      │  my-api                     │
-│   dashboard    · next · tailwind │  C:\Users\gibran\projects   │
-│   cli-lab      · go · git        │                             │
-│   design-tool  · react           │  rama    main               │
-│                                  │  remoto  github.com/...     │
-│                                  │                             │
-│                                  │  src/                       │
-│                                  │  Cargo.toml                 │
-│                                  │  README.md                  │
-╰──────────────────────────────────┴─────────────────────────────╯
-```
+<p align="center">
+  <img src="https://res.cloudinary.com/dgxg2q8xs/image/upload/q_auto/f_auto/v1779050397/Captura_de_pantalla_2026-05-17_143809_zq7cjc.png" width="700">
+</p>
 
 ## Requirements
 
