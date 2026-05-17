@@ -10,6 +10,7 @@
 #    2. Descarga el binario correcto de GitHub Releases
 #    3. Lo instala en ~/.local/bin (o /usr/local/bin con sudo)
 #    4. Muestra el snippet de integración de shell
+#    5. Ofrece instalar fzf y JetBrainsMono Nerd Font
 # ══════════════════════════════════════════════════════════════
 
 set -euo pipefail
@@ -34,6 +35,93 @@ info()    { printf "  ${TEAL}→${RESET}  %s\n" "$*"; }
 success() { printf "  ${GREEN}✓${RESET}  %s\n" "$*"; }
 warn()    { printf "  ${PEACH}!${RESET}  %s\n" "$*"; }
 error()   { printf "  ${RED}✗${RESET}  %s\n" "$*" >&2; exit 1; }
+
+confirm_yes() {
+  local message="$1"
+  local answer
+  printf "  ${MAUVE}?${RESET}  %s [Y/n]: " "$message"
+  read -r answer </dev/tty || answer=""
+  case "${answer,,}" in
+    n|no) return 1 ;;
+    *) return 0 ;;
+  esac
+}
+
+install_fzf_if_missing() {
+  printf "\n"
+  if command -v fzf >/dev/null 2>&1; then
+    success "fzf encontrado ($(fzf --version 2>/dev/null || printf 'desconocida'))"
+    return
+  fi
+
+  warn "fzf no encontrado. nexdev lo necesita para funcionar."
+  if ! confirm_yes "Instalar fzf ahora?"; then
+    warn "Instala fzf manualmente antes de usar nexdev."
+    return
+  fi
+
+  if command -v brew >/dev/null 2>&1; then
+    brew install fzf && success "fzf instalado" && return
+  elif command -v apt-get >/dev/null 2>&1; then
+    sudo apt-get update && sudo apt-get install -y fzf && success "fzf instalado" && return
+  elif command -v dnf >/dev/null 2>&1; then
+    sudo dnf install -y fzf && success "fzf instalado" && return
+  elif command -v pacman >/dev/null 2>&1; then
+    sudo pacman -S --needed --noconfirm fzf && success "fzf instalado" && return
+  fi
+
+  warn "No se pudo instalar fzf automáticamente."
+  printf "  ${OVERLAY}Instalación manual: https://github.com/junegunn/fzf${RESET}\n"
+}
+
+nerd_font_installed() {
+  if command -v fc-list >/dev/null 2>&1 && fc-list | grep -qi 'Nerd Font'; then
+    return 0
+  fi
+  find "$HOME/.local/share/fonts" "$HOME/Library/Fonts" -iname '*Nerd*Font*' -print -quit 2>/dev/null | grep -q .
+}
+
+install_nerd_font_if_missing() {
+  printf "\n"
+  if nerd_font_installed; then
+    success "Nerd Font detectada"
+    return
+  fi
+
+  warn "No se detectó una Nerd Font. Los iconos pueden verse como cuadros."
+  if ! confirm_yes "Instalar JetBrainsMono Nerd Font ahora?"; then
+    warn "Configura una Nerd Font en tu terminal para ver los iconos."
+    return
+  fi
+
+  if [ "$PLATFORM" = "macos" ] && command -v brew >/dev/null 2>&1; then
+    brew install --cask font-jetbrains-mono-nerd-font \
+      && success "JetBrainsMono Nerd Font instalada" \
+      && warn "Selecciona 'JetBrainsMono Nerd Font' en tu terminal." \
+      && return
+  fi
+
+  if command -v unzip >/dev/null 2>&1; then
+    local font_dir="$HOME/.local/share/fonts/JetBrainsMonoNerdFont"
+    local tmp_font_zip
+    tmp_font_zip="$(mktemp)"
+    mkdir -p "$font_dir"
+    $DOWNLOAD_TO "$tmp_font_zip" "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip" \
+      && unzip -oq "$tmp_font_zip" -d "$font_dir" \
+      && rm -f "$tmp_font_zip"; then
+      if command -v fc-cache >/dev/null 2>&1; then
+        fc-cache -f "$font_dir"
+      fi
+      success "JetBrainsMono Nerd Font instalada en ${font_dir}"
+      warn "Selecciona 'JetBrainsMono Nerd Font' en tu terminal."
+      return
+    fi
+    rm -f "$tmp_font_zip"
+  fi
+
+  warn "No se pudo instalar la fuente automáticamente."
+  printf "  ${OVERLAY}Instalación manual: https://www.nerdfonts.com/font-downloads${RESET}\n"
+}
 
 # ── Banner ────────────────────────────────────────────────────
 
@@ -229,6 +317,11 @@ SNIPPET
     ;;
 esac
 
+# ── Dependencias ───────────────────────────────────────────────
+
+install_fzf_if_missing
+install_nerd_font_if_missing
+
 # ── Primer uso ────────────────────────────────────────────────
 
 printf "\n"
@@ -237,4 +330,4 @@ printf "  Próximos pasos:\n"
 printf "    ${MAUVE}1.${RESET} Recarga tu shell o ejecuta ${TEAL}source ~/.bashrc${RESET} / ${TEAL}source ~/.zshrc${RESET}\n"
 printf "    ${MAUVE}2.${RESET} Ejecuta ${TEAL}nexdev${RESET} — el asistente de configuración aparecerá automáticamente\n"
 printf "    ${MAUVE}3.${RESET} O configura manualmente: ${TEAL}nexdev add ~/projects${RESET}\n\n"
-printf "  ${OVERLAY}Requiere fzf:  https://github.com/junegunn/fzf${RESET}\n\n"
+printf "  ${OVERLAY}Si los iconos no se ven bien, selecciona JetBrainsMono Nerd Font en tu terminal.${RESET}\n\n"

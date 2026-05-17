@@ -56,8 +56,8 @@ Then you search, click or scroll through projects, preview what is inside, press
 
 | Tool | Required | Install |
 |---|---:|---|
-| [fzf](https://github.com/junegunn/fzf) | Yes | `winget install junegunn.fzf`, `scoop install fzf`, `brew install fzf` |
-| [Nerd Font](https://www.nerdfonts.com/) | Recommended | Set it in your terminal profile |
+| [fzf](https://github.com/junegunn/fzf) | Yes | The installer can install it for you |
+| [Nerd Font](https://www.nerdfonts.com/) | Recommended | The installer can install JetBrainsMono Nerd Font |
 | Rust | Only for source installs | <https://rustup.rs> |
 
 For mouse click and scroll, use a terminal with mouse support, such as Windows Terminal, iTerm2, WezTerm, Kitty, Alacritty, or a modern Linux terminal.
@@ -70,7 +70,7 @@ For mouse click and scroll, use a terminal with mouse support, such as Windows T
 irm https://raw.githubusercontent.com/gibran564/nexdev/main/install.ps1 | iex
 ```
 
-The installer downloads the latest Windows release, installs `nexdev.exe` into `$HOME\.local\bin`, adds it to your user `PATH`, and adds the shell wrapper to `$PROFILE`.
+The installer downloads the latest Windows release, installs `nexdev.exe` into `$HOME\.local\bin`, adds it to your user `PATH`, adds the shell wrapper to `$PROFILE`, and offers to install `fzf` plus JetBrainsMono Nerd Font.
 
 ### Linux / macOS
 
@@ -78,7 +78,7 @@ The installer downloads the latest Windows release, installs `nexdev.exe` into `
 curl -fsSL https://raw.githubusercontent.com/gibran564/nexdev/main/install.sh | sh
 ```
 
-The installer downloads the latest release for your OS and architecture, installs it into `~/.local/bin`, and helps you add the shell wrapper.
+The installer downloads the latest release for your OS and architecture, installs it into `~/.local/bin`, helps you add the shell wrapper, and offers to install `fzf` plus JetBrainsMono Nerd Font when possible.
 
 ### From source
 

@@ -10,6 +10,7 @@
 #    2. Descarga el binario correcto de GitHub Releases
 #    3. Lo instala en $HOME\.local\bin  (en tu PATH de usuario)
 #    4. Agrega el wrapper de función a tu $PROFILE
+#    5. Ofrece instalar fzf y JetBrainsMono Nerd Font
 # ══════════════════════════════════════════════════════════════
 
 Set-StrictMode -Version Latest
@@ -39,6 +40,92 @@ function Info    { Write-Host "  `e[38;2;148;226;213m→`e[0m  $args" }
 function Success { Write-Host "  `e[38;2;166;227;161m✓`e[0m  $args" }
 function Warn    { Write-Host "  `e[38;2;250;179;135m!`e[0m  $args" }
 function Fail    { Write-Host "  `e[38;2;243;139;168m✗`e[0m  $args" -ForegroundColor Red; exit 1 }
+
+function Confirm-Yes([string]$Message) {
+    $answer = Read-Host "  `e[38;2;203;166;247m?`e[0m  $Message [Y/n]"
+    return ($answer.Trim().ToLower() -notin @('n', 'no'))
+}
+
+function Invoke-WingetInstall([string]$Id, [string]$Name) {
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+        return $false
+    }
+
+    Info "Instalando $Name con winget..."
+    try {
+        & winget install --id $Id --exact --silent --accept-package-agreements --accept-source-agreements
+        return ($LASTEXITCODE -eq 0)
+    } catch {
+        return $false
+    }
+}
+
+function Test-NerdFontInstalled {
+    $fontDirs = @(
+        (Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts'),
+        (Join-Path $env:WINDIR 'Fonts')
+    )
+
+    foreach ($dir in $fontDirs) {
+        if ((Test-Path $dir) -and (Get-ChildItem $dir -Filter '*Nerd*Font*' -ErrorAction SilentlyContinue | Select-Object -First 1)) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Ensure-Fzf {
+    Write-Host ""
+    if (Get-Command fzf -ErrorAction SilentlyContinue) {
+        $fzfVer = (fzf --version 2>$null) ?? "desconocida"
+        Success "fzf encontrado ($fzfVer)"
+        return
+    }
+
+    Warn "fzf no encontrado. nexdev lo necesita para funcionar."
+    if (Confirm-Yes "Instalar fzf ahora?") {
+        if (Invoke-WingetInstall 'junegunn.fzf' 'fzf') {
+            Success "fzf instalado"
+            return
+        }
+        if (Get-Command scoop -ErrorAction SilentlyContinue) {
+            Info "Instalando fzf con scoop..."
+            & scoop install fzf
+            if ($LASTEXITCODE -eq 0) {
+                Success "fzf instalado"
+                return
+            }
+        }
+        Warn "No se pudo instalar fzf automáticamente."
+    }
+
+    Write-Host "  `e[38;2;108;112;134mInstalación manual:`e[0m"
+    Write-Host "    `e[38;2;148;226;213mwinget install junegunn.fzf`e[0m"
+    Write-Host "    `e[38;2;148;226;213mscoop install fzf`e[0m"
+}
+
+function Ensure-NerdFont {
+    Write-Host ""
+    if (Test-NerdFontInstalled) {
+        Success "Nerd Font detectada"
+        return
+    }
+
+    Warn "No se detectó una Nerd Font. Los iconos pueden verse como cuadros."
+    if (Confirm-Yes "Instalar JetBrainsMono Nerd Font ahora?") {
+        if (Invoke-WingetInstall 'DEVCOM.JetBrainsMonoNerdFont' 'JetBrainsMono Nerd Font') {
+            Success "JetBrainsMono Nerd Font instalada"
+            Warn "Selecciona 'JetBrainsMono Nerd Font' en la configuración de tu terminal."
+            return
+        }
+        Warn "No se pudo instalar la fuente automáticamente con winget."
+    }
+
+    Write-Host "  `e[38;2;108;112;134mInstalación manual:`e[0m"
+    Write-Host "    `e[38;2;148;226;213mwinget install DEVCOM.JetBrainsMonoNerdFont`e[0m"
+    Write-Host "    `e[38;2;148;226;213mhttps://www.nerdfonts.com/font-downloads`e[0m"
+}
 
 # ── Banner ────────────────────────────────────────────────────
 
@@ -173,21 +260,10 @@ if ($profileContent -notlike "*function nexdev*") {
     Info "El wrapper ya existe en `$PROFILE — no se modificó."
 }
 
-# ── Verificar fzf ─────────────────────────────────────────────
+# ── Dependencias ───────────────────────────────────────────────
 
-Write-Host ""
-if (-not (Get-Command fzf -ErrorAction SilentlyContinue)) {
-    Warn "fzf no encontrado. nexdev lo necesita para funcionar."
-    Write-Host "  `e[38;2;108;112;134mInstala fzf con:`e[0m"
-    Write-Host ""
-    Write-Host "    `e[38;2;148;226;213mwinget install junegunn.fzf`e[0m"
-    Write-Host "    `e[38;2;108;112;134m# o:`e[0m"
-    Write-Host "    `e[38;2;148;226;213mscoop install fzf`e[0m"
-    Write-Host ""
-} else {
-    $fzfVer = (fzf --version 2>$null) ?? "desconocida"
-    Success "fzf encontrado ($fzfVer)"
-}
+Ensure-Fzf
+Ensure-NerdFont
 
 # ── Listo ─────────────────────────────────────────────────────
 
