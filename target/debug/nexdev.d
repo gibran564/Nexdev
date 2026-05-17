@@ -1,0 +1,1 @@
+C:\Users\gibra\nexdev\target\debug\nexdev.exe: C:\Users\gibra\nexdev\src\cli.rs C:\Users\gibra\nexdev\src\config.rs C:\Users\gibra\nexdev\src\detect.rs C:\Users\gibra\nexdev\src\i18n.rs C:\Users\gibra\nexdev\src\main.rs C:\Users\gibra\nexdev\src\navigator.rs C:\Users\gibra\nexdev\src\preview.rs C:\Users\gibra\nexdev\src\shell.rs

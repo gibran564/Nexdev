@@ -1,0 +1,17 @@
+[package]
+name = "nexdev"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "nexdev"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "=1.0.102"
+colored = "=2.1.0"
+dirs = "=4.0.0"
+which = "=4.4.2"
+clap = { version = "=4.4.18", features = ["derive"] }
+serde = { version = "=1.0.219", features = ["derive"] }
+toml = "=0.5.11"

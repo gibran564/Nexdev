@@ -1,0 +1,164 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"          # Dispara en: git tag v0.1.0 && git push --tags
+
+permissions:
+  contents: write   # necesario para crear GitHub Releases
+
+jobs:
+  build:
+    name: Build — ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ── Linux x86_64 ──────────────────────────────────────
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            artifact: nexdev-linux-x86_64
+            archive: .tar.gz
+            cross: false
+
+          # ── Linux ARM64 (Raspberry Pi, servidores ARM) ────────
+          - os: ubuntu-22.04
+            target: aarch64-unknown-linux-gnu
+            artifact: nexdev-linux-aarch64
+            archive: .tar.gz
+            cross: true           # usa 'cross' para cross-compilar
+
+          # ── macOS Apple Silicon (M1/M2/M3) ───────────────────
+          - os: macos-14
+            target: aarch64-apple-darwin
+            artifact: nexdev-macos-aarch64
+            archive: .tar.gz
+            cross: false
+
+          # ── macOS Intel ───────────────────────────────────────
+          - os: macos-14
+            target: x86_64-apple-darwin
+            artifact: nexdev-macos-x86_64
+            archive: .tar.gz
+            cross: false
+
+          # ── Windows x86_64 ────────────────────────────────────
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: nexdev-windows-x86_64
+            archive: .zip
+            cross: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      # Solo necesario para cross-compilación ARM Linux
+      - name: Install cross
+        if: matrix.cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      # ── Build ─────────────────────────────────────────────────
+      - name: Build (native)
+        if: "!matrix.cross"
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Build (cross)
+        if: matrix.cross
+        run: cross build --release --target ${{ matrix.target }}
+
+      # ── Empaquetar ────────────────────────────────────────────
+      - name: Package (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cd target/${{ matrix.target }}/release
+          tar czf ../../../${{ matrix.artifact }}.tar.gz nexdev
+          cd ../../..
+          sha256sum ${{ matrix.artifact }}.tar.gz > ${{ matrix.artifact }}.tar.gz.sha256
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cd target/${{ matrix.target }}/release
+          Compress-Archive -Path nexdev.exe -DestinationPath ../../../${{ matrix.artifact }}.zip
+          cd ../../..
+          $hash = (Get-FileHash ${{ matrix.artifact }}.zip -Algorithm SHA256).Hash.ToLower()
+          "$hash  ${{ matrix.artifact }}.zip" | Out-File -Encoding utf8 ${{ matrix.artifact }}.zip.sha256
+
+      # ── Subir artifacts ───────────────────────────────────────
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            ${{ matrix.artifact }}.*
+
+  # ── Crear GitHub Release con todos los binarios ───────────────
+  release:
+    name: Publish Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: nexdev ${{ github.ref_name }}
+          body: |
+            ## Instalación rápida
+
+            **Linux / macOS:**
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh | sh
+            ```
+
+            **Windows (PowerShell):**
+            ```powershell
+            irm https://raw.githubusercontent.com/${{ github.repository }}/main/install.ps1 | iex
+            ```
+
+            ---
+
+            ## Binarios manuales
+
+            | Plataforma | Archivo |
+            |---|---|
+            | Linux x86_64 | `nexdev-linux-x86_64.tar.gz` |
+            | Linux ARM64 | `nexdev-linux-aarch64.tar.gz` |
+            | macOS Apple Silicon | `nexdev-macos-aarch64.tar.gz` |
+            | macOS Intel | `nexdev-macos-x86_64.tar.gz` |
+            | Windows x86_64 | `nexdev-windows-x86_64.zip` |
+
+            Verifica la integridad con los archivos `.sha256` adjuntos.
+
+            ## Después de instalar
+
+            Agrega la integración de shell:
+            ```bash
+            nexdev install   # muestra el snippet para tu shell
+            ```
+          files: artifacts/**
+          generate_release_notes: false
+          draft: false
+          prerelease: false
