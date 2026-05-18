@@ -105,18 +105,37 @@ install_nerd_font_if_missing() {
     local font_dir="$HOME/.local/share/fonts/JetBrainsMonoNerdFont"
     local tmp_font_zip
     tmp_font_zip="$(mktemp)"
-    mkdir -p "$font_dir"
-    $DOWNLOAD_TO "$tmp_font_zip" "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip" \
-      && unzip -oq "$tmp_font_zip" -d "$font_dir" \
-      && rm -f "$tmp_font_zip"; then
-      if command -v fc-cache >/dev/null 2>&1; then
-        fc-cache -f "$font_dir"
-      fi
-      success "JetBrainsMono Nerd Font instalada en ${font_dir}"
-      warn "Selecciona 'JetBrainsMono Nerd Font' en tu terminal."
+    if ! mkdir -p "$font_dir"; then
+      warn "No se pudo crear el directorio de fuentes: ${font_dir}"
+      rm -f "$tmp_font_zip"
       return
     fi
+
+    if ! $DOWNLOAD_TO "$tmp_font_zip" "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"; then
+      warn "No se pudo descargar JetBrainsMono Nerd Font."
+      rm -f "$tmp_font_zip"
+      return
+    fi
+
+    if ! unzip -oq "$tmp_font_zip" -d "$font_dir"; then
+      warn "No se pudo descomprimir la fuente en ${font_dir}."
+      rm -f "$tmp_font_zip"
+      return
+    fi
+
     rm -f "$tmp_font_zip"
+
+    if command -v fc-cache >/dev/null 2>&1; then
+      if ! fc-cache -f "$font_dir"; then
+        warn "La fuente se instaló, pero no se pudo refrescar la caché de fuentes."
+      fi
+    else
+      warn "La fuente se instaló, pero 'fc-cache' no está disponible para refrescar caché."
+    fi
+
+    success "JetBrainsMono Nerd Font instalada en ${font_dir}"
+    warn "Selecciona 'JetBrainsMono Nerd Font' en tu terminal."
+    return
   fi
 
   warn "No se pudo instalar la fuente automáticamente."
