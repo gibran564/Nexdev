@@ -13,7 +13,7 @@
 #    5. Ofrece instalar fzf y JetBrainsMono Nerd Font
 # ══════════════════════════════════════════════════════════════
 
-set -euo pipefail
+set -eu
 
 # ── Config ────────────────────────────────────────────────────
 
@@ -21,27 +21,33 @@ REPO="gibran564/nexdev"
 BINARY="nexdev"
 INSTALL_DIR="${NEXDEV_INSTALL_DIR:-$HOME/.local/bin}"
 
-# Colores (Catppuccin Mocha)
-MAUVE='\033[38;2;203;166;247m'
-TEAL='\033[38;2;148;226;213m'
-GREEN='\033[38;2;166;227;161m'
-RED='\033[38;2;243;139;168m'
-PEACH='\033[38;2;250;179;135m'
-OVERLAY='\033[38;2;108;112;134m'
-BOLD='\033[1m'
-RESET='\033[0m'
+# Colores (Catppuccin Mocha) — solo si el terminal los soporta
+if [ -t 1 ]; then
+  MAUVE='\033[38;2;203;166;247m'
+  TEAL='\033[38;2;148;226;213m'
+  GREEN='\033[38;2;166;227;161m'
+  RED='\033[38;2;243;139;168m'
+  PEACH='\033[38;2;250;179;135m'
+  OVERLAY='\033[38;2;108;112;134m'
+  BOLD='\033[1m'
+  RESET='\033[0m'
+else
+  MAUVE='' TEAL='' GREEN='' RED='' PEACH='' OVERLAY='' BOLD='' RESET=''
+fi
 
 info()    { printf "  ${TEAL}→${RESET}  %s\n" "$*"; }
 success() { printf "  ${GREEN}✓${RESET}  %s\n" "$*"; }
 warn()    { printf "  ${PEACH}!${RESET}  %s\n" "$*"; }
 error()   { printf "  ${RED}✗${RESET}  %s\n" "$*" >&2; exit 1; }
 
+# POSIX-compatible confirm: no bash-isms
 confirm_yes() {
   local message="$1"
   local answer
   printf "  ${MAUVE}?${RESET}  %s [Y/n]: " "$message"
   read -r answer </dev/tty || answer=""
-  case "${answer,,}" in
+  answer="$(printf '%s' "$answer" | tr '[:upper:]' '[:lower:]')"
+  case "$answer" in
     n|no) return 1 ;;
     *) return 0 ;;
   esac
@@ -126,11 +132,9 @@ install_nerd_font_if_missing() {
     rm -f "$tmp_font_zip"
 
     if command -v fc-cache >/dev/null 2>&1; then
-      if ! fc-cache -f "$font_dir"; then
-        warn "La fuente se instaló, pero no se pudo refrescar la caché de fuentes."
-      fi
+      fc-cache -f "$font_dir" || warn "La fuente se instaló, pero no se pudo refrescar la caché de fuentes."
     else
-      warn "La fuente se instaló, pero 'fc-cache' no está disponible para refrescar caché."
+      warn "La fuente se instaló, pero 'fc-cache' no está disponible."
     fi
 
     success "JetBrainsMono Nerd Font instalada en ${font_dir}"
@@ -173,14 +177,14 @@ info "Plataforma detectada: ${PLATFORM}/${ARCH_SUFFIX}"
 
 info "Consultando última versión en GitHub..."
 
-if command -v curl &>/dev/null; then
+if command -v curl >/dev/null 2>&1; then
   DOWNLOADER="curl -fsSL"
   DOWNLOAD_TO="curl -fsSL -o"
-elif command -v wget &>/dev/null; then
+elif command -v wget >/dev/null 2>&1; then
   DOWNLOADER="wget -qO-"
   DOWNLOAD_TO="wget -q -O"
 else
-  error "Se necesita curl o wget para descargar. Instala uno de ellos primero."
+  error "Se necesita curl o wget. Instala uno de ellos primero."
 fi
 
 LATEST_TAG=$($DOWNLOADER "https://api.github.com/repos/${REPO}/releases/latest" \
@@ -208,10 +212,10 @@ SHA256_URL="${DOWNLOAD_URL}.sha256"
 TMP_SHA="${TMP_DIR}/${ARCHIVE}.sha256"
 if $DOWNLOAD_TO "$TMP_SHA" "$SHA256_URL" 2>/dev/null; then
   info "Verificando integridad (sha256)..."
-  if command -v sha256sum &>/dev/null; then
+  if command -v sha256sum >/dev/null 2>&1; then
     (cd "$TMP_DIR" && sha256sum -c "$TMP_SHA" --quiet) \
       || error "Verificación sha256 fallida — descarga corrupta."
-  elif command -v shasum &>/dev/null; then
+  elif command -v shasum >/dev/null 2>&1; then
     (cd "$TMP_DIR" && shasum -a 256 -c "$TMP_SHA" --quiet) \
       || error "Verificación sha256 fallida — descarga corrupta."
   fi
@@ -223,9 +227,7 @@ fi
 tar -xzf "$TMP_ARCHIVE" -C "$TMP_DIR"
 rm -f "$TMP_ARCHIVE"
 
-# Crear directorio de instalación si no existe
 mkdir -p "$INSTALL_DIR"
-
 install -m 755 "${TMP_DIR}/${BINARY}" "${INSTALL_DIR}/${BINARY}"
 rm -rf "$TMP_DIR"
 
@@ -233,7 +235,7 @@ success "Instalado en ${TEAL}${INSTALL_DIR}/${BINARY}${RESET}"
 
 # ── Verificar PATH ────────────────────────────────────────────
 
-if ! echo "$PATH" | tr ':' '\n' | grep -qx "$INSTALL_DIR"; then
+if ! printf '%s' "$PATH" | tr ':' '\n' | grep -qx "$INSTALL_DIR"; then
   printf "\n"
   warn "${INSTALL_DIR} no está en tu PATH."
   printf "  ${OVERLAY}Agrega esto a tu ~/.bashrc o ~/.zshrc:${RESET}\n\n"
@@ -250,22 +252,22 @@ SHELL_NAME="$(basename "${SHELL:-bash}")"
 case "$SHELL_NAME" in
   zsh)
     printf "  Agrega esto a ${TEAL}~/.zshrc${RESET}:\n\n"
-    printf "    ${OVERLAY}# nexdev — project navigator${RESET}\n"
-    printf "    ${OVERLAY}nexdev() {${RESET}\n"
-    printf "    ${OVERLAY}  if (( \$# > 0 )); then${RESET}\n"
-    printf "    ${OVERLAY}    command nexdev \"\$@\"${RESET}\n"
-    printf "    ${OVERLAY}    return${RESET}\n"
-    printf "    ${OVERLAY}  fi${RESET}\n"
-    printf "    ${OVERLAY}${RESET}\n"
-    printf "    ${OVERLAY}  local selected${RESET}\n"
-    printf "    ${OVERLAY}  selected=\$(command nexdev)${RESET}\n"
-    printf "    ${OVERLAY}  [[ -n \"\$selected\" ]] && cd \"\$selected\"${RESET}\n"
-    printf "    ${OVERLAY}}${RESET}\n\n"
-    # Intentar auto-agregar si el usuario lo permite
-    printf "  ¿Agregar automáticamente a ~/.zshrc? [Y/n]: "
-    read -r AUTO_INSTALL </dev/tty
-    if [[ "${AUTO_INSTALL:-y}" =~ ^[Yy]$ ]]; then
-      cat >> "$HOME/.zshrc" << 'SNIPPET'
+    cat <<'SHOW'
+    # nexdev — project navigator
+    nexdev() {
+      if (( $# > 0 )); then
+        command nexdev "$@"
+        return
+      fi
+
+      local selected
+      selected=$(command nexdev)
+      [[ -n "$selected" ]] && cd "$selected"
+    }
+SHOW
+    printf "\n"
+    if confirm_yes "Agregar automáticamente a ~/.zshrc?"; then
+      cat >> "$HOME/.zshrc" <<'SNIPPET'
 
 # nexdev — project navigator
 nexdev() {
@@ -282,11 +284,12 @@ SNIPPET
       success "Snippet agregado a ~/.zshrc  ${OVERLAY}(ejecuta: source ~/.zshrc)${RESET}"
     fi
     ;;
+
   fish)
     FISH_FUNC="$HOME/.config/fish/functions/nexdev.fish"
     printf "  Guardando en ${TEAL}${FISH_FUNC}${RESET}...\n"
     mkdir -p "$(dirname "$FISH_FUNC")"
-    cat > "$FISH_FUNC" << 'SNIPPET'
+    cat > "$FISH_FUNC" <<'SNIPPET'
 function nexdev
   if test (count $argv) -gt 0
     command nexdev $argv
@@ -301,23 +304,25 @@ end
 SNIPPET
     success "Función fish guardada en ${FISH_FUNC}"
     ;;
+
   bash | *)
     printf "  Agrega esto a ${TEAL}~/.bashrc${RESET}:\n\n"
-    printf "    ${OVERLAY}# nexdev — project navigator${RESET}\n"
-    printf "    ${OVERLAY}nexdev() {${RESET}\n"
-    printf "    ${OVERLAY}  if [ \"\$#\" -gt 0 ]; then${RESET}\n"
-    printf "    ${OVERLAY}    command nexdev \"\$@\"${RESET}\n"
-    printf "    ${OVERLAY}    return${RESET}\n"
-    printf "    ${OVERLAY}  fi${RESET}\n"
-    printf "    ${OVERLAY}${RESET}\n"
-    printf "    ${OVERLAY}  local selected${RESET}\n"
-    printf "    ${OVERLAY}  selected=\$(command nexdev)${RESET}\n"
-    printf "    ${OVERLAY}  [ -n \"\$selected\" ] && cd \"\$selected\"${RESET}\n"
-    printf "    ${OVERLAY}}${RESET}\n\n"
-    printf "  ¿Agregar automáticamente a ~/.bashrc? [Y/n]: "
-    read -r AUTO_INSTALL </dev/tty
-    if [[ "${AUTO_INSTALL:-y}" =~ ^[Yy]$ ]]; then
-      cat >> "$HOME/.bashrc" << 'SNIPPET'
+    cat <<'SHOW'
+    # nexdev — project navigator
+    nexdev() {
+      if [ "$#" -gt 0 ]; then
+        command nexdev "$@"
+        return
+      fi
+
+      local selected
+      selected=$(command nexdev)
+      [ -n "$selected" ] && cd "$selected"
+    }
+SHOW
+    printf "\n"
+    if confirm_yes "Agregar automáticamente a ~/.bashrc?"; then
+      cat >> "$HOME/.bashrc" <<'SNIPPET'
 
 # nexdev — project navigator
 nexdev() {
@@ -336,7 +341,7 @@ SNIPPET
     ;;
 esac
 
-# ── Dependencias ───────────────────────────────────────────────
+# ── Dependencias ──────────────────────────────────────────────
 
 install_fzf_if_missing
 install_nerd_font_if_missing
@@ -346,7 +351,7 @@ install_nerd_font_if_missing
 printf "\n"
 printf "  ${GREEN}${BOLD}¡Listo!${RESET}\n\n"
 printf "  Próximos pasos:\n"
-printf "    ${MAUVE}1.${RESET} Recarga tu shell o ejecuta ${TEAL}source ~/.bashrc${RESET} / ${TEAL}source ~/.zshrc${RESET}\n"
+printf "    ${MAUVE}1.${RESET} Recarga tu shell:  ${TEAL}source ~/.zshrc${RESET}  o  ${TEAL}source ~/.bashrc${RESET}\n"
 printf "    ${MAUVE}2.${RESET} Ejecuta ${TEAL}nexdev${RESET} — el asistente de configuración aparecerá automáticamente\n"
 printf "    ${MAUVE}3.${RESET} O configura manualmente: ${TEAL}nexdev add ~/projects${RESET}\n\n"
 printf "  ${OVERLAY}Si los iconos no se ven bien, selecciona JetBrainsMono Nerd Font en tu terminal.${RESET}\n\n"
