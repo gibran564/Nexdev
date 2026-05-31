@@ -1,71 +1,126 @@
 # nexdev
 
-Fast project navigation for developers who keep real work spread across many folders.
+Stop losing time looking for projects.
 
-`nexdev` scans your configured project roots, detects tech stacks, opens an interactive `fzf` picker with a live preview, changes your shell into the selected project, and optionally opens your editor.
+`nexdev` is a fast project launcher for developers with projects scattered everywhere.
 
-Built by [@gibran564](https://github.com/gibran564).
+Search all your projects from one command, preview them instantly, jump into the right folder, and open your editor in seconds.
 
-> Status: early personal tool. Public source, not licensed yet. See [License](#license).
+Built for developers, students, freelancers, tinkerers, and people with 40 unfinished side projects.
+
+> One command. Every project.
 
 ---
 
-## Why nexdev
+## What is nexdev?
 
-Most project launchers assume every repo lives in one tidy directory. Real machines do not. `nexdev` is for workstations with side projects, client work, experiments, monorepos, old archives, and language-specific folders.
+Most developers have projects everywhere:
 
-It gives you one command:
+* old university assignments
+* side projects
+* freelance work
+* experiments
+* cloned repos
+* monorepos
+* random folders called `final-final-now-real`
+
+`nexdev` scans your folders and gives you a clean searchable launcher inside the terminal.
+
+Just run:
 
 ```bash
 nexdev
 ```
 
-Then you search, click or scroll through projects, preview what is inside, press Enter, and land in the right directory.
+Then:
 
-## Highlights
+* search instantly
+* preview projects live
+* see technologies automatically detected
+* open the correct folder
+* launch your editor automatically
 
-| Feature | What it gives you |
-|---|---|
-| Interactive project picker | `fzf` UI with keyboard, mouse click, scroll, search, and preview |
-| Smart detection | Tags projects by `.git`, `package.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`, and more |
-| Live preview | Shows path, branch, remote, git status, and top-level files |
-| Shell integration | Changes the current terminal directory after selection |
-| Editor launch | Opens `code`, `nvim`, `vim`, `hx`, `idea`, `zed`, or disables editor launch |
-| Bilingual UX | Spanish and English, selected at the beginning of setup |
-| Configurable roots | Add multiple roots and per-root exclusions without editing code |
+No more:
+
+```text
+cd Documents
+cd projects
+cd old
+cd frontend
+cd app-final
+cd app-final-v2
+```
+
+---
+
+## Why people like it
+
+### ⚡ Fast
+
+Open projects in seconds.
+
+### 🧠 Smart detection
+
+Automatically detects:
+
+* Git repositories
+* React
+* Next.js
+* Python
+* Rust
+* Java
+* Go
+* .NET
+* and more
+
+### 🔎 Live preview
+
+See project info before opening it:
+
+* branch
+* git status
+* remote
+* important files
+
+### 🖱️ Keyboard + mouse support
+
+Search with keyboard or click using your mouse.
+
+### 🌎 English and Spanish
+
+Choose your language during setup.
+
+### 🎯 Made for real developers
+
+Not everyone keeps projects in one perfect folder.
+
+nexdev was made for messy real-world machines.
+
+---
 
 ## Preview
 
 <p align="center">
   <img src="https://res.cloudinary.com/dgxg2q8xs/image/upload/q_auto/f_auto/v1779050397/Captura_de_pantalla_2026-05-17_143809_zq7cjc.png" width="700">
 </p>
+
 <div align="center">
-  <img 
-    src="https://res.cloudinary.com/dgxg2q8xs/image/upload/q_auto/f_auto/v1779050566/Captura_de_pantalla_2026-05-17_144232_suhcme.png" 
-    alt="Captura de pantalla"
+  <img
+    src="https://res.cloudinary.com/dgxg2q8xs/image/upload/q_auto/f_auto/v1779050566/Captura_de_pantalla_2026-05-17_144232_suhcme.png"
+    alt="Preview"
     width="700"
   >
 </div>
 
-## Requirements
-
-| Tool | Required | Install |
-|---|---:|---|
-| [fzf](https://github.com/junegunn/fzf) | Yes | The installer can install it for you |
-| [Nerd Font](https://www.nerdfonts.com/) | Recommended | The installer can install JetBrainsMono Nerd Font |
-| Rust | Only for source installs | <https://rustup.rs> |
-
-For mouse click and scroll, use a terminal with mouse support, such as Windows Terminal, iTerm2, WezTerm, Kitty, Alacritty, or a modern Linux terminal.
+---
 
 ## Install
 
-### Windows PowerShell
+### Windows
 
 ```powershell
 irm https://raw.githubusercontent.com/gibran564/nexdev/main/install.ps1 | iex
 ```
-
-The installer downloads the latest Windows release, installs `nexdev.exe` into `$HOME\.local\bin`, adds it to your user `PATH`, adds the shell wrapper to `$PROFILE`, and offers to install `fzf` plus JetBrainsMono Nerd Font.
 
 ### Linux / macOS
 
@@ -73,23 +128,9 @@ The installer downloads the latest Windows release, installs `nexdev.exe` into `
 curl -fsSL https://raw.githubusercontent.com/gibran564/nexdev/main/install.sh | sh
 ```
 
-The installer downloads the latest release for your OS and architecture, installs it into `~/.local/bin`, helps you add the shell wrapper, and offers to install `fzf` plus JetBrainsMono Nerd Font when possible.
+---
 
-### From source
-
-```bash
-cargo install --git https://github.com/gibran564/nexdev
-```
-
-After installing from source, run:
-
-```bash
-nexdev install
-```
-
-That prints the exact shell integration snippet for Bash, Zsh, Fish, and PowerShell.
-
-## First Run
+## First launch
 
 Run:
 
@@ -97,242 +138,123 @@ Run:
 nexdev
 ```
 
-On first launch, `nexdev` starts a setup wizard:
+The setup wizard will:
 
-```text
-  nexdev  initial setup / configuracion inicial
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+* ask your language
+* ask where your projects are
+* detect your editor
+* configure everything automatically
 
-  1/3  Language / Idioma
-
-     1  Espanol
-     2  English
-
-  ? Selecciona idioma / Choose language [1]
-
-  nexdev  configuracion inicial
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  2/3  Donde estan tus proyectos?
-     Enter acepta la ruta sugerida. Despues, Enter vacio termina la lista.
-
-  ? Ruta 1 - vacio para terminar [C:\Users\gibran]
-  ✓  C:\Users\gibran
-
-  3/3  Editor preferido
-     Se usara para abrir el proyecto seleccionado.
-
-  >  1. VS Code  [detectado]
-     2. Neovim
-     3. Vim
-     4. Helix
-     5. IntelliJ
-     6. Zed
-     7. Ninguno
-```
-
-Config file locations:
-
-| OS | Path |
-|---|---|
-| Windows | `%APPDATA%\nexdev\config.toml` |
-| Linux/macOS | `~/.config/nexdev/config.toml` |
-
-## Usage
+After that, just run:
 
 ```bash
 nexdev
 ```
 
-Open the project picker. Select a project to `cd` into it and open your configured editor.
+any time you want to jump into a project.
+
+---
+
+## Example workflow
 
 ```bash
-nexdev add ~/projects
-nexdev add ~/work --exclude archived legacy build
+nexdev
 ```
 
-Add project roots. Local exclusions skip noisy folders inside that root.
-
-```bash
-nexdev editor code
-nexdev editor "code --new-window"
-nexdev editor nvim
-nexdev editor none
-```
-
-Set or disable the editor command.
-
-```bash
-nexdev language es
-nexdev language en
-```
-
-Switch the CLI language.
-
-```bash
-nexdev paths
-nexdev config
-nexdev init
-nexdev install
-```
-
-Inspect roots, show full config, rerun setup, or print shell integration.
-
-## Commands
-
-| Command | Description |
-|---|---|
-| `nexdev` | Open the project picker. First run starts setup |
-| `nexdev add <path>` | Add a project root |
-| `nexdev add <path> --exclude dir1 dir2` | Add a root with local exclusions |
-| `nexdev remove <path>` | Remove a configured root |
-| `nexdev editor <cmd>` | Set the editor command |
-| `nexdev editor none` | Disable editor launch |
-| `nexdev language es\|en` | Change language |
-| `nexdev paths` | List configured roots |
-| `nexdev config` | Show full config |
-| `nexdev init` | Rerun setup |
-| `nexdev install` | Print shell wrapper snippets |
-| `nexdev --help` | Show CLI help |
-
-## Manual Config
-
-```toml
-language = "es"
-editor = "code"
-
-global_excludes = [
-  "Desktop",
-  "Documents",
-  "Downloads",
-  "AppData",
-  "node_modules",
-  "target",
-  ".venv",
-]
-
-[[roots]]
-path = "C:\\Users\\gibran\\projects"
-exclude = ["archived"]
-
-[[roots]]
-path = "C:\\Users\\gibran\\work"
-exclude = ["legacy", "tmp"]
-```
-
-## Project Detection
-
-| Marker | Tag |
-|---|---|
-| `.git/` | `git` |
-| GitHub remote | GitHub icon |
-| GitLab remote | GitLab icon |
-| Azure DevOps remote | Azure icon |
-| `package.json` | `node` |
-| `package.json` + `next.config.*` | `next` |
-| `package.json` + `"react"` | `react` |
-| `package.json` + `"vue"` | `vue` |
-| `package.json` + `"svelte"` | `svelte` |
-| `tailwind.config.*` | `tailwind` |
-| `requirements.txt`, `pyproject.toml`, `setup.py`, `Pipfile` | `python` |
-| `*.ipynb` | `jupyter` |
-| `Cargo.toml` | `rust` |
-| `*.sln`, `*.csproj`, `*.fsproj` | `dotnet` |
-| `pom.xml`, `build.gradle`, `build.gradle.kts` | `java` |
-| `go.mod` | `go` |
-
-## Shell Integration
-
-A child process cannot change the working directory of its parent shell. `nexdev` solves that with a small shell wrapper:
-
-1. The binary prints the selected path to stdout.
-2. The wrapper captures that path.
-3. The wrapper runs `cd` / `Set-Location` in the current shell.
-
-Run this to print the snippets:
-
-```bash
-nexdev install
-```
-
-PowerShell example:
-
-```powershell
-function nexdev {
-    if ($args.Count -gt 0) {
-        & nexdev.exe @args
-        return
-    }
-
-    $selected = & nexdev.exe
-    if ($selected) { Set-Location $selected }
-}
-```
-
-Bash/Zsh example:
-
-```bash
-nexdev() {
-  if [ "$#" -gt 0 ]; then
-    command nexdev "$@"
-    return
-  fi
-
-  local selected
-  selected=$(command nexdev)
-  [ -n "$selected" ] && cd "$selected"
-}
-```
-
-## Release Artifacts
-
-| OS | Architecture | Artifact |
-|---|---|---|
-| Linux | x86_64 | `nexdev-linux-x86_64.tar.gz` |
-| Linux | ARM64 | `nexdev-linux-aarch64.tar.gz` |
-| macOS | Apple Silicon | `nexdev-macos-aarch64.tar.gz` |
-| macOS | Intel | `nexdev-macos-x86_64.tar.gz` |
-| Windows | x86_64 | `nexdev-windows-x86_64.zip` |
-
-## Development
-
-```bash
-cargo fmt
-cargo check
-cargo run -- --help
-cargo run -- init
-```
-
-Project layout:
+Search:
 
 ```text
-nexdev/
-+-- install.sh
-+-- install.ps1
-+-- Cargo.toml
-+-- README.md
-+-- src/
-    +-- main.rs       # command dispatch
-    +-- cli.rs        # clap arguments
-    +-- config.rs     # config, setup wizard, commands
-    +-- detect.rs     # project type detection
-    +-- i18n.rs       # Spanish/English strings
-    +-- navigator.rs  # scan, fzf UI, selection handling
-    +-- preview.rs    # live preview panel
-    +-- shell.rs      # shell wrapper snippets
+portfolio
 ```
+
+Press Enter.
+
+Done.
+
+You're already inside the project with your editor open.
+
+---
+
+## Features
+
+| Feature              | Description                             |
+| -------------------- | --------------------------------------- |
+| Interactive search   | Fast fuzzy search with preview          |
+| Auto tech detection  | Detects frameworks and languages        |
+| Git integration      | Shows branches and status               |
+| Multi-folder support | Scan many project locations             |
+| Editor launcher      | VS Code, Neovim, Zed, IntelliJ and more |
+| Bilingual UX         | English and Spanish                     |
+| Mouse support        | Scroll and click support                |
+
+---
+
+## Supported editors
+
+* VS Code
+* Neovim
+* Vim
+* Helix
+* IntelliJ IDEA
+* Zed
+* or no editor at all
+
+---
+
+## Perfect for
+
+* Computer science students
+* Developers with many repos
+* Freelancers
+* Linux users
+* Terminal lovers
+* Side-project addicts
+* Developers tired of navigating folders manually
+
+---
+
+## Install from source
+
+```bash
+cargo install --git https://github.com/gibran564/nexdev
+```
+
+Then:
+
+```bash
+nexdev install
+```
+
+---
 
 ## Roadmap
 
-- Polish release automation and binary checksums.
-- Add screenshots or terminal recordings.
-- Add tests for config parsing and project detection.
-- Decide and publish an explicit license.
+* Better previews
+* Themes
+* Terminal recordings
+* More project detectors
+* Better performance on huge folders
+* Plugin ideas
+* Team/project tags
+
+---
+
+## Contributing
+
+Suggestions, bug reports, feedback and ideas are welcome.
+
+If something feels annoying, confusing or missing, open an issue.
+
+This project is still evolving.
+
+---
 
 ## License
 
-No license has been published yet.
+No official license yet.
 
-That means the source is visible for review and learning, but reuse, redistribution, modification, and commercial use are not granted unless the author adds a license or gives explicit permission.
+The source is public for learning and feedback purposes while the project is still evolving.
 
-Copyright (c) 2026 Gibran, [@gibran564](https://github.com/gibran564). All rights reserved.
+---
+
+Built by [@gibran564](https://github.com/gibran564)
