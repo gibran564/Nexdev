@@ -251,9 +251,7 @@ This project is still evolving.
 
 ## License
 
-No official license yet.
-
-The source is public for learning and feedback purposes while the project is still evolving.
+MIT © 2026 Christian Gibran Espituñal Villanueva
 
 ---
 
