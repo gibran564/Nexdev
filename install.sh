@@ -47,37 +47,117 @@ confirm_yes() {
   esac
 }
  
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+run_with_sudo_if_needed() {
+  if [ "$(id -u)" -eq 0 ]; then
+    "$@"
+  elif command_exists sudo; then
+    sudo "$@"
+  else
+    warn "Se necesita sudo para ejecutar: $*"
+    return 1
+  fi
+}
+
+install_fzf_from_git() {
+  if ! command_exists git; then
+    return 1
+  fi
+
+  local fzf_dir="${FZF_INSTALL_DIR:-$HOME/.fzf}"
+  if [ -d "$fzf_dir/.git" ]; then
+    info "Actualizando fzf desde ${fzf_dir}..."
+    git -C "$fzf_dir" pull --ff-only --depth 1 >/dev/null 2>&1 || true
+  else
+    info "Instalando fzf desde GitHub en ${fzf_dir}..."
+    rm -rf "$fzf_dir"
+    git clone --depth 1 https://github.com/junegunn/fzf.git "$fzf_dir" || return 1
+  fi
+
+  "$fzf_dir/install" --bin --key-bindings --completion --no-update-rc \
+    && success "fzf instalado desde GitHub" \
+    && warn "Para atajos/completado de fzf, ejecuta: ${fzf_dir}/install" \
+    && return 0
+
+  return 1
+}
+
 install_fzf_if_missing() {
   printf "\n"
-  if command -v fzf >/dev/null 2>&1; then
+  if command_exists fzf; then
     success "fzf encontrado ($(fzf --version 2>/dev/null || printf 'desconocida'))"
     return
   fi
- 
+
   warn "fzf no encontrado. nexdev lo necesita para funcionar."
- 
-  if ! [ -c /dev/tty ]; then
-    warn "Instala fzf manualmente: https://github.com/junegunn/fzf"
-    return
-  fi
- 
-  if ! confirm_yes "Instalar fzf ahora?"; then
+
+  if [ -c /dev/tty ] && ! confirm_yes "Instalar fzf ahora?"; then
     warn "Instala fzf manualmente antes de usar nexdev."
     return
+  elif ! [ -c /dev/tty ]; then
+    info "Instalación no interactiva: intentando métodos disponibles automáticamente."
   fi
- 
-  if command -v brew >/dev/null 2>&1; then
-    brew install fzf && success "fzf instalado" && return
-  elif command -v apt-get >/dev/null 2>&1; then
-    sudo apt-get update && sudo apt-get install -y fzf && success "fzf instalado" && return
-  elif command -v dnf >/dev/null 2>&1; then
-    sudo dnf install -y fzf && success "fzf instalado" && return
-  elif command -v pacman >/dev/null 2>&1; then
-    sudo pacman -S --needed --noconfirm fzf && success "fzf instalado" && return
+
+  if command_exists brew; then
+    info "Instalando fzf con Homebrew..."
+    brew install fzf && success "fzf instalado con Homebrew" && return
   fi
- 
+
+  if command_exists mise; then
+    info "Instalando fzf con mise..."
+    mise use -g fzf@latest && success "fzf instalado con mise" && return
+  fi
+
+  if command_exists apt-get; then
+    info "Instalando fzf con apt..."
+    run_with_sudo_if_needed apt-get update \
+      && run_with_sudo_if_needed apt-get install -y fzf \
+      && success "fzf instalado con apt" \
+      && return
+  fi
+
+  if command_exists dnf; then
+    info "Instalando fzf con dnf..."
+    run_with_sudo_if_needed dnf install -y fzf && success "fzf instalado con dnf" && return
+  fi
+
+  if command_exists pacman; then
+    info "Instalando fzf con pacman..."
+    run_with_sudo_if_needed pacman -S --needed --noconfirm fzf && success "fzf instalado con pacman" && return
+  fi
+
+  if command_exists zypper; then
+    info "Instalando fzf con zypper..."
+    run_with_sudo_if_needed zypper --non-interactive install fzf && success "fzf instalado con zypper" && return
+  fi
+
+  if command_exists apk; then
+    info "Instalando fzf con apk..."
+    run_with_sudo_if_needed apk add --no-cache fzf && success "fzf instalado con apk" && return
+  fi
+
+  if command_exists eopkg; then
+    info "Instalando fzf con eopkg..."
+    run_with_sudo_if_needed eopkg install -y fzf && success "fzf instalado con eopkg" && return
+  fi
+
+  if command_exists nix-env; then
+    info "Instalando fzf con nix-env..."
+    nix-env -iA nixpkgs.fzf && success "fzf instalado con nix-env" && return
+  fi
+
+  if install_fzf_from_git; then
+    return
+  fi
+
   warn "No se pudo instalar fzf automáticamente."
-  printf "  ${OVERLAY}Instalación manual: https://github.com/junegunn/fzf${RESET}\n"
+  printf "  ${OVERLAY}Opciones manuales:${RESET}\n"
+  printf "    ${TEAL}brew install fzf${RESET}\n"
+  printf "    ${TEAL}mise use -g fzf@latest${RESET}\n"
+  printf "    ${TEAL}git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && ~/.fzf/install${RESET}\n"
 }
  
 nerd_font_installed() {

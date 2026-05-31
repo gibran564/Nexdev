@@ -60,6 +60,80 @@ function Invoke-WingetInstall([string]$Id, [string]$Name) {
     }
 }
 
+function Invoke-ChocoInstall([string]$Package, [string]$Name) {
+    if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
+        return $false
+    }
+
+    Info "Instalando $Name con Chocolatey..."
+    try {
+        & choco install $Package -y --no-progress
+        return ($LASTEXITCODE -eq 0)
+    } catch {
+        return $false
+    }
+}
+
+function Invoke-ScoopInstall([string]$Package, [string]$Name) {
+    if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
+        return $false
+    }
+
+    Info "Instalando $Name con scoop..."
+    try {
+        & scoop install $Package
+        return ($LASTEXITCODE -eq 0)
+    } catch {
+        return $false
+    }
+}
+
+function Invoke-MiseInstall([string]$Tool, [string]$Name) {
+    if (-not (Get-Command mise -ErrorAction SilentlyContinue)) {
+        return $false
+    }
+
+    Info "Instalando $Name con mise..."
+    try {
+        & mise use -g $Tool
+        return ($LASTEXITCODE -eq 0)
+    } catch {
+        return $false
+    }
+}
+
+function Install-FzfFromGitHubRelease {
+    $tmpDir = [System.IO.Path]::GetTempPath() | Join-Path -ChildPath "fzf_install_$([System.IO.Path]::GetRandomFileName())"
+    New-Item -ItemType Directory -Path $tmpDir | Out-Null
+
+    try {
+        Info "Instalando fzf desde GitHub Releases..."
+        $release = Invoke-RestMethod 'https://api.github.com/repos/junegunn/fzf/releases/latest'
+        $asset = $release.assets | Where-Object { $_.name -match 'windows_amd64\.zip$' } | Select-Object -First 1
+        if (-not $asset) { return $false }
+
+        $zipPath = Join-Path $tmpDir $asset.name
+        Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zipPath -UseBasicParsing
+        Expand-Archive -Path $zipPath -DestinationPath $tmpDir -Force
+
+        $fzfExe = Get-ChildItem -Path $tmpDir -Filter 'fzf.exe' -Recurse | Select-Object -First 1
+        if (-not $fzfExe) { return $false }
+
+        if (-not (Test-Path $InstallDir)) {
+            New-Item -ItemType Directory -Path $InstallDir | Out-Null
+        }
+
+        Copy-Item $fzfExe.FullName (Join-Path $InstallDir 'fzf.exe') -Force
+        $env:PATH = "$InstallDir;$env:PATH"
+        Success "fzf instalado desde GitHub Releases"
+        return $true
+    } catch {
+        return $false
+    } finally {
+        Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
 function Test-NerdFontInstalled {
     $fontDirs = @(
         (Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Fonts'),
@@ -78,31 +152,48 @@ function Test-NerdFontInstalled {
 function Ensure-Fzf {
     Write-Host ""
     if (Get-Command fzf -ErrorAction SilentlyContinue) {
-        $fzfVer = (fzf --version 2>$null) ?? "desconocida"
+        $fzfVer = & fzf --version 2>$null
+        if (-not $fzfVer) { $fzfVer = "desconocida" }
         Success "fzf encontrado ($fzfVer)"
         return
     }
 
     Warn "fzf no encontrado. nexdev lo necesita para funcionar."
-    if (Confirm-Yes "Instalar fzf ahora?") {
-        if (Invoke-WingetInstall 'junegunn.fzf' 'fzf') {
-            Success "fzf instalado"
-            return
-        }
-        if (Get-Command scoop -ErrorAction SilentlyContinue) {
-            Info "Instalando fzf con scoop..."
-            & scoop install fzf
-            if ($LASTEXITCODE -eq 0) {
-                Success "fzf instalado"
-                return
-            }
-        }
-        Warn "No se pudo instalar fzf automáticamente."
+    if (-not (Confirm-Yes "Instalar fzf ahora?")) {
+        Warn "Instala fzf manualmente antes de usar nexdev."
+        return
     }
 
-    Write-Host "  `e[38;2;108;112;134mInstalación manual:`e[0m"
+    if (Invoke-WingetInstall 'junegunn.fzf' 'fzf') {
+        Success "fzf instalado con winget"
+        return
+    }
+
+    if (Invoke-ScoopInstall 'fzf' 'fzf') {
+        Success "fzf instalado con scoop"
+        return
+    }
+
+    if (Invoke-ChocoInstall 'fzf' 'fzf') {
+        Success "fzf instalado con Chocolatey"
+        return
+    }
+
+    if (Invoke-MiseInstall 'fzf@latest' 'fzf') {
+        Success "fzf instalado con mise"
+        return
+    }
+
+    if (Install-FzfFromGitHubRelease) {
+        return
+    }
+
+    Warn "No se pudo instalar fzf automáticamente."
+    Write-Host "  `e[38;2;108;112;134mOpciones manuales:`e[0m"
     Write-Host "    `e[38;2;148;226;213mwinget install junegunn.fzf`e[0m"
     Write-Host "    `e[38;2;148;226;213mscoop install fzf`e[0m"
+    Write-Host "    `e[38;2;148;226;213mchoco install fzf -y`e[0m"
+    Write-Host "    `e[38;2;148;226;213mmise use -g fzf@latest`e[0m"
 }
 
 function Ensure-NerdFont {
