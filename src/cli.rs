@@ -17,7 +17,7 @@ pub struct Cli {
 
 #[derive(Subcommand, Debug)]
 pub enum Command {
-    /// Agrega una raiz de busqueda.
+    /// Guarda una carpeta donde nexdev va a buscar proyectos; como decirle "mira aqui, sensei".
     Add {
         path: PathBuf,
 
@@ -25,28 +25,28 @@ pub enum Command {
         exclude: Vec<String>,
     },
 
-    /// Elimina una raiz configurada.
+    /// Saca una carpeta de la lista cuando ya no queremos que aparezca en el radar.
     Remove { path: PathBuf },
 
-    /// Cambia el idioma: es o en.
+    /// Cambia el idioma entre `es` y `en`, porque a veces el cerebro bootea distinto.
     Language { lang: String },
 
-    /// Lista las raices configuradas.
+    /// Enseña las carpetas guardadas para revisar rapido si metimos bien las rutas.
     Paths,
 
-    /// Cambia el editor.
+    /// Cambia el comando del editor que se abre al elegir proyecto.
     Editor { cmd: String },
 
-    /// Muestra la configuracion completa.
+    /// Imprime la configuracion completa para hacer debugging sin invocar magia negra.
     Config,
 
-    /// Ejecuta otra vez el asistente inicial.
+    /// Vuelve a correr el asistente inicial por si nos arrepentimos de la primera build.
     Init,
 
-    /// Imprime la integracion de shell.
+    /// Muestra el wrapper de shell que permite hacer `cd` despues de escoger proyecto.
     Install,
 
-    /// Comando interno para renderizar el preview de fzf.
+    /// Atajo interno de fzf: pinta el preview; no es para usarlo a mano salvo modo curioso.
     #[command(hide = true, name = "__preview")]
     Preview { idx: usize },
 }

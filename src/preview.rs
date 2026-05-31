@@ -70,7 +70,7 @@ fn render_path(path: &Path, lang: Lang) -> Result<()> {
             }
         }
 
-        // El status de git es opcional: si falla, el preview sigue funcionando.
+        // El estado de git es bonus track: si falla, el preview no se cae y seguimos como si nada.
         if let Ok(status_output) = Command::new("git")
             .args(["-C", &path.to_string_lossy(), "status", "--short"])
             .output()

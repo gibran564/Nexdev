@@ -1,22 +1,12 @@
 #Requires -Version 5.1
-# ══════════════════════════════════════════════════════════════
-#  install.ps1 — nexdev installer para Windows
-#
-#  Uso (PowerShell como usuario normal, NO requiere admin):
-#    irm https://raw.githubusercontent.com/gibran564/nexdev/main/install.ps1 | iex
-#
-#  Qué hace:
-#    1. Detecta arquitectura (x86_64 / ARM64)
-#    2. Descarga el binario correcto de GitHub Releases
-#    3. Lo instala en $HOME\.local\bin  (en tu PATH de usuario)
-#    4. Agrega el wrapper de función a tu $PROFILE
-#    5. Ofrece instalar fzf y JetBrainsMono Nerd Font
-# ══════════════════════════════════════════════════════════════
+# Instalador de Windows; dejo el hechizo completo aqui para cuando se olvide el README:
+# irm https://raw.githubusercontent.com/gibran564/nexdev/main/install.ps1 | iex
+# Hace el combo: detecta arquitectura, baja release, instala binario, agrega wrapper y revisa dependencias.
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# ── Config ────────────────────────────────────────────────────
+# Datos base del instalador; si cambias repo/binario, todo lo de abajo sigue esa pista.
 
 $Repo        = "gibran564/nexdev"
 $Binary      = "nexdev.exe"
@@ -26,7 +16,7 @@ $InstallDir  = if ($env:NEXDEV_INSTALL_DIR) {
     Join-Path $HOME '.local\bin'
 }
 
-# ── Colores Catppuccin Mocha ──────────────────────────────────
+# Paleta Catppuccin Mocha para que PowerShell no se vea tan modo oficina gris.
 
 function Write-Color([string]$Text, [int[]]$RGB, [switch]$Bold, [switch]$NoNewline) {
     $code = "`e[38;2;$($RGB[0]);$($RGB[1]);$($RGB[2])m"
@@ -218,7 +208,7 @@ function Ensure-NerdFont {
     Write-Host "    `e[38;2;148;226;213mhttps://www.nerdfonts.com/font-downloads`e[0m"
 }
 
-# ── Banner ────────────────────────────────────────────────────
+# Mensaje inicial: sirve para confirmar que PowerShell si esta ejecutando este script.
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $env:TERM = 'xterm-256color'
@@ -228,22 +218,22 @@ Write-Host "  `e[38;2;203;166;247m`e[1mnexdev`e[0m  `e[38;2;108;112;134m— inst
 Write-Host "  `e[38;2;108;112;134m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`e[0m"
 Write-Host ""
 
-# ── Detectar arquitectura ─────────────────────────────────────
+# Revisamos arquitectura antes de bajar nada; instalar el exe equivocado seria speedrun de error.
 
 $arch = [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture
 $archSuffix = switch ($arch) {
     'X64'   { 'x86_64' }
-    'Arm64' { 'arm64'  }   # futuro: cuando haya binario ARM64 Windows
+    'Arm64' { 'arm64'  }   # futuro: cuando exista binario ARM64 de Windows, este valor ya queda medio encaminado.
     default { Fail "Arquitectura no soportada: $arch" }
 }
 
-# Por ahora solo hay x86_64 para Windows
+# De momento Windows usa x86_64; ARM64 queda apuntado para despues, como tarea en backlog.
 $Artifact = "nexdev-windows-x86_64"
 $Archive  = "${Artifact}.zip"
 
 Info "Plataforma detectada: Windows/${archSuffix}"
 
-# ── Obtener última versión ────────────────────────────────────
+# Preguntamos a GitHub por la release mas nueva para no clavar versiones a mano.
 
 Info "Consultando última versión en GitHub..."
 
@@ -256,7 +246,7 @@ try {
 
 Info "Versión más reciente: `e[38;2;148;226;213m${latestTag}`e[0m"
 
-# ── Descargar ─────────────────────────────────────────────────
+# Armamos URLs y bajamos el zip; aqui empieza la parte de traer el loot.
 
 $baseUrl    = "https://github.com/$Repo/releases/download/$latestTag"
 $archiveUrl = "$baseUrl/$Archive"
@@ -273,7 +263,7 @@ try {
     Fail "Error al descargar:`n  $archiveUrl`n  Verifica que la versión $latestTag tenga ese archivo."
 }
 
-# Verificar sha256
+# Validamos sha256 si GitHub trae el archivo; mejor desconfiar poquito que instalar basura.
 try {
     $expectedSha = (Invoke-WebRequest -Uri $sha256Url -UseBasicParsing).Content.Trim() -split '\s+' | Select-Object -First 1
     $actualSha   = (Get-FileHash $tmpArchive -Algorithm SHA256).Hash.ToLower()
@@ -286,12 +276,12 @@ try {
     Warn "No se pudo verificar sha256 — continuando de todas formas."
 }
 
-# ── Extraer e instalar ────────────────────────────────────────
+# Descomprimimos y copiamos el exe a la carpeta final; ya casi aparece el protagonista.
 
 Expand-Archive -Path $tmpArchive -DestinationPath $tmpDir -Force
 Remove-Item $tmpArchive
 
-# Crear directorio de instalación
+# Creamos la carpeta si falta; PowerShell no adivina destinos, aunque a veces parezca boss final.
 if (-not (Test-Path $InstallDir)) {
     New-Item -ItemType Directory -Path $InstallDir | Out-Null
 }
@@ -302,7 +292,7 @@ Remove-Item $tmpDir -Recurse -Force
 
 Success "Instalado en `e[38;2;148;226;213m${InstallDir}\${Binary}`e[0m"
 
-# ── Agregar al PATH de usuario ────────────────────────────────
+# Metemos la carpeta al PATH de usuario para poder escribir `nexdev` sin ruta completa.
 
 $userPath = [Environment]::GetEnvironmentVariable("PATH", "User")
 if ($userPath -notlike "*$InstallDir*") {
@@ -317,7 +307,7 @@ if ($userPath -notlike "*$InstallDir*") {
     Info "$InstallDir ya está en tu PATH"
 }
 
-# ── Integración de shell (función wrapper en $PROFILE) ────────
+# El wrapper vive en el profile: asi PowerShell puede hacer cd despues de que nexdev elija ruta.
 
 Write-Host ""
 Write-Host "  `e[38;2;203;166;247m`e[1mIntegración de shell`e[0m  `e[38;2;108;112;134m(requerida para que cd funcione)`e[0m"
@@ -325,7 +315,7 @@ Write-Host ""
 
 $snippet = @'
 
-# nexdev — project navigator
+# Wrapper de nexdev: con args ejecuta comandos; sin args abre selector y cambia carpeta.
 function nexdev {
     if ($args.Count -gt 0) {
         & nexdev.exe @args
@@ -337,7 +327,7 @@ function nexdev {
 }
 '@
 
-# Crear $PROFILE si no existe
+# Si no existe el profile, lo creamos; sin archivo no hay donde pegar el wrapper.
 if (-not (Test-Path $PROFILE)) {
     New-Item -ItemType File -Path $PROFILE -Force | Out-Null
 }
@@ -351,12 +341,12 @@ if ($profileContent -notlike "*function nexdev*") {
     Info "El wrapper ya existe en `$PROFILE — no se modificó."
 }
 
-# ── Dependencias ───────────────────────────────────────────────
+# Revisamos lo extra: fzf para buscar y Nerd Font para que los iconos no salgan en tofu.
 
 Ensure-Fzf
 Ensure-NerdFont
 
-# ── Listo ─────────────────────────────────────────────────────
+# Final con recordatorio, porque reiniciar terminal es el paso que todos olvidamos.
 
 Write-Host ""
 Write-Host "  `e[38;2;166;227;161m`e[1m¡Listo!`e[0m"
