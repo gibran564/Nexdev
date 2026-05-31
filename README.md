@@ -125,7 +125,7 @@ irm https://raw.githubusercontent.com/gibran564/nexdev/main/install.ps1 | iex
 ### Linux / macOS
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/gibran564/nexdev/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/gibran564/nexdev/main/install.sh | bash
 ```
 
 ---
