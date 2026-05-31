@@ -97,7 +97,7 @@ fn write_lookup(entries: &[Entry]) -> Result<Vec<String>> {
 
 fn preview_cmd() -> Result<String> {
     let bin = std::env::current_exe().context("no se pudo resolver la ruta del binario")?;
-    // El formato debug entrecomilla la ruta del binario si contiene espacios.
+    // `{:?}` pone comillas si el binario vive en una ruta con espacios; Windows vibes, pero salva la run.
     Ok(format!("{:?} __preview {{1}}", bin))
 }
 
@@ -251,7 +251,7 @@ fn handle_selection(raw: &str, lookup_lines: &[(usize, String)], cfg: &Config) -
 
     spawn_editor(&cfg.editor, &path);
 
-    // El wrapper lee exclusivamente esta linea para hacer cd.
+    // El wrapper solo espera esta linea en stdout; si metemos ruido aqui, el `cd` se va al isekai.
     println!("{}", path.display());
 
     Ok(())

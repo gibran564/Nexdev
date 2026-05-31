@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
-# ══════════════════════════════════════════════════════════════
-#  install.sh — nexdev installer for Linux and macOS
-#
-#  Uso:
-#    curl -fsSL https://raw.githubusercontent.com/gibran564/nexdev/main/install.sh | bash
-# ══════════════════════════════════════════════════════════════
+# Instalador para Linux/macOS; dejo el comando aqui para no andar cazandolo en el README:
+# curl -fsSL https://raw.githubusercontent.com/gibran564/nexdev/main/install.sh | bash
  
 set -eu
  
@@ -12,7 +8,7 @@ REPO="gibran564/nexdev"
 BINARY="nexdev"
 INSTALL_DIR="${NEXDEV_INSTALL_DIR:-$HOME/.local/bin}"
  
-# Colores (Catppuccin Mocha)
+# Paleta Catppuccin Mocha; puro drip visual para que la terminal no parezca NPC.
 MAUVE='\033[38;2;203;166;247m'
 TEAL='\033[38;2;148;226;213m'
 GREEN='\033[38;2;166;227;161m'
@@ -27,7 +23,7 @@ success() { printf "  ${GREEN}✓${RESET}  %s\n" "$*"; }
 warn()    { printf "  ${PEACH}!${RESET}  %s\n" "$*"; }
 error()   { printf "  ${RED}✗${RESET}  %s\n" "$*" >&2; exit 1; }
  
-# Lee desde /dev/tty con fallback seguro si no está disponible
+# Pregunta directo a la terminal; si no hay modo interactivo, mejor no fingir que escuchamos.
 confirm_yes() {
   local message="$1"
   local answer=""
@@ -217,12 +213,12 @@ install_nerd_font_if_missing() {
   printf "  ${OVERLAY}Instalación manual: https://www.nerdfonts.com/font-downloads${RESET}\n"
 }
  
-# ── Banner ────────────────────────────────────────────────────
+# Primero saludamos bonito; ayuda a saber que el script si arranco y no se quedo congelado.
  
 printf "\n  ${MAUVE}${BOLD}nexdev${RESET}  ${OVERLAY}— instalador${RESET}\n"
 printf "  ${OVERLAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n\n"
  
-# ── Detectar OS ───────────────────────────────────────────────
+# Revisamos sistema y arquitectura antes de descargar, porque un binario equivocado hace kaboom silencioso.
  
 OS="$(uname -s)"
 ARCH="$(uname -m)"
@@ -242,7 +238,7 @@ esac
 ARCHIVE="nexdev-${PLATFORM}-${ARCH_SUFFIX}.tar.gz"
 info "Plataforma detectada: ${PLATFORM}/${ARCH_SUFFIX}"
  
-# ── Downloader ────────────────────────────────────────────────
+# Curl o wget, el que exista; con uno basta para traer cosas de GitHub.
  
 if command -v curl >/dev/null 2>&1; then
   DOWNLOADER="curl -fsSL"
@@ -254,7 +250,7 @@ else
   error "Se necesita curl o wget. Instala uno primero."
 fi
  
-# ── Obtener última versión ────────────────────────────────────
+# Pedimos la release mas nueva a GitHub; asi no hardcodeamos versiones como tarea vieja.
  
 info "Consultando última versión en GitHub..."
  
@@ -266,7 +262,7 @@ LATEST_TAG=$($DOWNLOADER "https://api.github.com/repos/${REPO}/releases/latest" 
  
 info "Versión más reciente: ${TEAL}${LATEST_TAG}${RESET}"
  
-# ── Descargar ─────────────────────────────────────────────────
+# Bajamos el artefacto que corresponde a esta maquina, nada de mezclar Linux con macOS.
  
 DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${LATEST_TAG}/${ARCHIVE}"
 TMP_DIR="$(mktemp -d)"
@@ -276,7 +272,7 @@ info "Descargando ${ARCHIVE}..."
 $DOWNLOAD_TO "$TMP_ARCHIVE" "$DOWNLOAD_URL" \
   || error "Error al descargar desde:\n  ${DOWNLOAD_URL}"
  
-# Verificar sha256
+# Checamos sha256 si viene disponible; no queremos instalar un zip sospechoso modo villano.
 SHA256_URL="${DOWNLOAD_URL}.sha256"
 TMP_SHA="${TMP_DIR}/${ARCHIVE}.sha256"
 if $DOWNLOAD_TO "$TMP_SHA" "$SHA256_URL" 2>/dev/null; then
@@ -289,7 +285,7 @@ if $DOWNLOAD_TO "$TMP_SHA" "$SHA256_URL" 2>/dev/null; then
   success "Integridad verificada"
 fi
  
-# ── Extraer e instalar ────────────────────────────────────────
+# Descomprimimos y copiamos el binario al directorio elegido; aqui ya se vuelve usable.
  
 tar -xzf "$TMP_ARCHIVE" -C "$TMP_DIR"
 rm -f "$TMP_ARCHIVE"
@@ -299,7 +295,7 @@ rm -rf "$TMP_DIR"
  
 success "Instalado en ${TEAL}${INSTALL_DIR}/${BINARY}${RESET}"
  
-# ── Verificar PATH ────────────────────────────────────────────
+# Si la carpeta no esta en PATH, nexdev existe pero la shell se hace la que no lo conoce.
  
 if ! printf '%s' "$PATH" | tr ':' '\n' | grep -qx "$INSTALL_DIR"; then
   printf "\n"
@@ -308,7 +304,7 @@ if ! printf '%s' "$PATH" | tr ':' '\n' | grep -qx "$INSTALL_DIR"; then
   printf "    ${TEAL}export PATH=\"\$HOME/.local/bin:\$PATH\"${RESET}\n\n"
 fi
  
-# ── Integración de shell ──────────────────────────────────────
+# Este wrapper es la clave: un proceso hijo no puede hacer `cd` por su papa, asi que la shell ayuda.
  
 printf "\n"
 printf "  ${MAUVE}${BOLD}Integración de shell${RESET}  ${OVERLAY}(requerida para que cd funcione)${RESET}\n\n"
@@ -319,7 +315,7 @@ case "$SHELL_NAME" in
   zsh)
     printf "  Agrega esto a ${TEAL}~/.zshrc${RESET}:\n\n"
     cat <<'SHOW'
-    # nexdev — project navigator
+    # Wrapper de nexdev: con argumentos manda comandos; sin argumentos abre fzf y luego hace cd.
     nexdev() {
       if (( $# > 0 )); then
         command nexdev "$@"
@@ -334,7 +330,7 @@ SHOW
     if confirm_yes "Agregar automáticamente a ~/.zshrc?"; then
       cat >> "$HOME/.zshrc" <<'SNIPPET'
  
-# nexdev — project navigator
+# Wrapper de nexdev: con argumentos manda comandos; sin argumentos abre fzf y luego hace cd.
 nexdev() {
   if (( $# > 0 )); then
     command nexdev "$@"
@@ -371,7 +367,7 @@ SNIPPET
   bash|*)
     printf "  Agrega esto a ${TEAL}~/.bashrc${RESET}:\n\n"
     cat <<'SHOW'
-    # nexdev — project navigator
+    # Wrapper de nexdev: con argumentos manda comandos; sin argumentos abre fzf y luego hace cd.
     nexdev() {
       if [ "$#" -gt 0 ]; then
         command nexdev "$@"
@@ -386,7 +382,7 @@ SHOW
     if confirm_yes "Agregar automáticamente a ~/.bashrc?"; then
       cat >> "$HOME/.bashrc" <<'SNIPPET'
  
-# nexdev — project navigator
+# Wrapper de nexdev: con argumentos manda comandos; sin argumentos abre fzf y luego hace cd.
 nexdev() {
   if [ "$#" -gt 0 ]; then
     command nexdev "$@"
@@ -402,12 +398,12 @@ SNIPPET
     ;;
 esac
  
-# ── Dependencias ──────────────────────────────────────────────
+# Ultima pasada por dependencias; fzf es obligatorio y la Nerd Font evita cuadritos feos.
  
 install_fzf_if_missing
 install_nerd_font_if_missing
  
-# ── Fin ───────────────────────────────────────────────────────
+# Cierre con pasos humanos, porque instalar y quedarse mirando la terminal no cuenta como setup.
  
 printf "\n"
 printf "  ${GREEN}${BOLD}¡Listo!${RESET}\n\n"

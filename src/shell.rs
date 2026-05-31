@@ -83,7 +83,7 @@ fn print_snippet(code: &str) {
 }
 
 const BASH_SNIPPET: &str = r#"
-# nexdev
+# Wrapper de nexdev: con comandos se porta normal; sin comandos elige proyecto y hace cd.
 nexdev() {
   if [ "$#" -gt 0 ]; then
     command nexdev "$@"
@@ -97,7 +97,7 @@ nexdev() {
 "#;
 
 const ZSH_SNIPPET: &str = r#"
-# nexdev
+# Wrapper de nexdev: con comandos se porta normal; sin comandos elige proyecto y hace cd.
 nexdev() {
   if (( $# > 0 )); then
     command nexdev "$@"
@@ -111,7 +111,7 @@ nexdev() {
 "#;
 
 const FISH_SNIPPET: &str = r#"
-# nexdev
+# Wrapper de nexdev: con comandos se porta normal; sin comandos elige proyecto y hace cd.
 function nexdev
   if test (count $argv) -gt 0
     command nexdev $argv
@@ -126,7 +126,7 @@ end
 "#;
 
 const POWERSHELL_SNIPPET: &str = r#"
-# nexdev
+# Wrapper de nexdev: con comandos se porta normal; sin comandos elige proyecto y hace cd.
 function nexdev {
     if ($args.Count -gt 0) {
         & nexdev.exe @args

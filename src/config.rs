@@ -116,7 +116,7 @@ pub fn config_path() -> PathBuf {
         .join("config.toml")
 }
 
-/// Mantiene separado el lookup de cada proceso para evitar cruces entre ejecuciones.
+/// Cada proceso usa su propio lookup; si no, dos ventanas de fzf se pisan como pelea de mechas.
 pub fn lookup_path() -> PathBuf {
     if let Ok(path) = std::env::var("NEXDEV_LOOKUP") {
         return PathBuf::from(path);
