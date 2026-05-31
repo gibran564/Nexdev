@@ -42,8 +42,8 @@ pub fn detect(dir: &Path) -> Option<ProjectInfo> {
         if let Ok(content) = std::fs::read_to_string(&git_config) {
             for line in content.lines() {
                 let trimmed = line.trim();
-                if trimmed.starts_with("url = ") {
-                    remote = trimmed["url = ".len()..].to_string();
+                if let Some(stripped) = trimmed.strip_prefix("url = ") {
+                    remote = stripped.to_string();
                     break;
                 }
             }
@@ -124,7 +124,7 @@ pub fn detect(dir: &Path) -> Option<ProjectInfo> {
             .ok()
             .map(|rd| {
                 rd.flatten()
-                    .any(|e| e.path().extension().map_or(false, |x| x == "ipynb"))
+                    .any(|e| e.path().extension().is_some_and(|x| x == "ipynb"))
             })
             .unwrap_or(false);
 

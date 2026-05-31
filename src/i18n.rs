@@ -38,7 +38,7 @@ pub fn detect_lang() -> Lang {
     parse_lang(&raw)
 }
 
-pub fn t<'a>(lang: Lang, key: &'a str) -> &'a str {
+pub fn t(lang: Lang, key: &str) -> &str {
     match (lang, key) {
         (Lang::Es, "setup.title") => "configuracion inicial",
         (Lang::En, "setup.title") => "project navigator setup",

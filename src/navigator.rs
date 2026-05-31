@@ -243,10 +243,7 @@ fn handle_selection(raw: &str, lookup_lines: &[(usize, String)], cfg: &Config) -
         String::new()
     };
 
-    eprintln!(
-        "\n  {}\x1b[1m\u{E0B1}  {name}\x1b[0m{branch_display}",
-        "\x1b[38;2;203;166;247m",
-    );
+    eprintln!("\n  \x1b[38;2;203;166;247m\x1b[1m\u{E0B1}  {name}\x1b[0m{branch_display}");
     eprintln!("  \x1b[38;2;108;112;134m{}\x1b[0m\n", path.display());
 
     spawn_editor(&cfg.editor, &path);
