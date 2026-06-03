@@ -128,6 +128,12 @@ irm https://raw.githubusercontent.com/gibran564/nexdev/main/install.ps1 | iex
 curl -fsSL https://raw.githubusercontent.com/gibran564/nexdev/main/install.sh | bash
 ```
 
+### Nix / NixOS
+
+```bash
+nix run github:gibran564/nexdev
+```
+
 ---
 
 ## First launch
